@@ -42,7 +42,6 @@
   :root[data-theme="dark"]{
     --ink:#f2ede1;
     --ink-soft:#c9c2b2;
-    --ivory:#14140f;
     --panel:#1c1c16;
     --forest:#7fa389;
     --forest-2:#a9c7b1;
@@ -51,6 +50,17 @@
     --brass-soft:#e3c084;
     --line: rgba(242,237,225,0.14);
     --shadow: 0 18px 40px rgba(0,0,0,0.5);
+  }
+
+  /* Tema "XV años" — sustituye la paleta de acento (verde bosque) por rosa/dorado.
+     Se activa poniendo data-tema="xv" en <body> según el tipo de evento. */
+  body[data-tema="xv"]{
+    --forest:#9c3d5e;
+    --forest-2:#7a2c47;
+    --blush:#f0cfda;
+    --brass:#b8860b;
+    --brass-soft:#d4a017;
+    --shadow: 0 18px 40px rgba(122,44,71,0.18);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -300,9 +310,9 @@
 <section id="invite" class="view active">
   <div class="card">
     <div class="hero">
-      <div class="eyebrow">NOS CASAMOS</div>
-      <h1>Renata<span class="amp">&amp;</span>Mateo</h1>
-      <div class="date">Sábado <strong>12 de diciembre, 2026</strong><br>5:00 PM · Hacienda San Rafael</div>
+      <div class="eyebrow" id="ev-eyebrow">CARGANDO…</div>
+      <h1 id="ev-nombre">—</h1>
+      <div class="date" id="ev-fecha-lugar">—</div>
       <div class="countdown" id="countdown">
         <div><div class="n" id="cd-d">—</div><div class="l">DÍAS</div></div>
         <div><div class="n" id="cd-h">—</div><div class="l">HRS</div></div>
@@ -311,25 +321,21 @@
     </div>
 
     <div class="body-block">
-      <p>Con la bendición de nuestras familias, queremos compartir contigo el inicio de esta nueva etapa. Tu presencia es el regalo más importante que podemos recibir.</p>
+      <p id="ev-mensaje">Cargando información del evento…</p>
 
       <div class="detail-row">
-        <div class="ic">⛪</div>
-        <div class="tx"><b>Ceremonia religiosa</b><span>Parroquia San Rafael · 5:00 PM</span></div>
+        <div class="ic">📍</div>
+        <div class="tx"><b>Lugar</b><span id="ev-direccion">—</span></div>
       </div>
-      <div class="detail-row">
-        <div class="ic">🥂</div>
-        <div class="tx"><b>Recepción</b><span>Hacienda San Rafael, Salón Jardín · 6:30 PM</span></div>
-      </div>
-      <div class="detail-row">
+      <div class="detail-row" id="row-vestimenta" style="display:none;">
         <div class="ic">👗</div>
-        <div class="tx"><b>Código de vestimenta</b><span>Formal — tonos tierra y verdes</span></div>
+        <div class="tx"><b>Código de vestimenta</b><span id="ev-vestimenta">—</span></div>
       </div>
     </div>
 
     <div class="rsvp" id="rsvp-block">
       <h2>Confirma tu asistencia</h2>
-      <div class="sub">Te pedimos confirmar antes del 20 de noviembre.</div>
+      <div class="sub" id="ev-fecha-limite">Te pedimos confirmar lo antes posible.</div>
 
       <form id="rsvp-form">
         <div class="field">
@@ -408,7 +414,7 @@
   <div id="admin-content" style="display:none;">
     <div class="admin-head" style="display:flex; justify-content:space-between; align-items:flex-start;">
       <div>
-        <h1>Panel de Renata &amp; Mateo</h1>
+        <h1 id="admin-title">Panel del organizador</h1>
         <p>Resumen del evento en tiempo real</p>
       </div>
       <button id="logout-btn" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">Cerrar sesión</button>
@@ -453,7 +459,13 @@
 
   var SUPABASE_URL = "https://ujmvlborpsaikzbpyxjw.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_7U9no2mzjwg-1_tDg4JcLg_sqNh_dLy";
-  var EVENTO_ID = "cfde150e-e3cb-42da-a379-abfa5b3bd233"; // evento "Renata & Mateo"
+
+  // El evento se elige por la URL: ?e=slug (ej. ?e=ximena-xv). Sin parámetro,
+  // cae en el evento de boda de pruebas.
+  var urlParams = new URLSearchParams(window.location.search);
+  var EVENTO_SLUG = urlParams.get('e') || 'renata-mateo';
+  var EVENTO_ID = null;   // se resuelve al cargar el evento
+  var eventoData = null;  // fila completa de "eventos"
 
   var db = null;
   var dbErrorDetail = '';
@@ -465,6 +477,60 @@
     console.error('No se pudo inicializar Supabase', e);
   }
 
+  var TIPO_EYEBROW = {
+    boda: 'NOS CASAMOS', xv: 'MIS XV AÑOS', bautizo: 'MI BAUTIZO',
+    cumpleanos: 'MI CUMPLEAÑOS', baby_shower: 'BABY SHOWER', otro: 'ESTÁS INVITADO'
+  };
+  var TIPO_MENSAJE = {
+    boda: 'Con la bendición de nuestras familias, queremos compartir contigo el inicio de esta nueva etapa. Tu presencia es el regalo más importante que podemos recibir.',
+    xv: 'Con mucha ilusión te invito a celebrar mis XV años, un día que quiero compartir con las personas más importantes de mi vida.',
+    bautizo: 'Con gran alegría te invitamos a celebrar este día tan especial en nuestra fe y en nuestra familia.',
+    cumpleanos: '¡Queremos celebrar contigo un día más de vida! Tu compañía hará de este festejo algo inolvidable.',
+    baby_shower: 'Con mucha emoción te invitamos a celebrar la llegada de nuestro bebé.',
+    otro: 'Nos encantaría contar con tu presencia en este día tan especial.'
+  };
+
+  async function cargarEvento(){
+    if(!db) return false;
+    var res = await db.from('eventos')
+      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa')
+      .eq('slug', EVENTO_SLUG)
+      .maybeSingle();
+    if(res.error || !res.data) return false;
+    eventoData = res.data;
+    EVENTO_ID = eventoData.id;
+
+    document.body.setAttribute('data-tema', eventoData.tipo_evento);
+    document.title = eventoData.nombre_evento + ' — Invitación Digital';
+
+    document.getElementById('ev-eyebrow').textContent = TIPO_EYEBROW[eventoData.tipo_evento] || TIPO_EYEBROW.otro;
+    document.getElementById('ev-nombre').textContent = eventoData.nombre_evento;
+    document.getElementById('ev-mensaje').textContent = TIPO_MENSAJE[eventoData.tipo_evento] || TIPO_MENSAJE.otro;
+
+    var fecha = new Date(eventoData.fecha_evento);
+    var fechaTexto = fecha.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    var horaTexto = fecha.toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' });
+    document.getElementById('ev-fecha-lugar').innerHTML =
+      fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1) + '<br>' + horaTexto + (eventoData.lugar ? (' · ' + eventoData.lugar) : '');
+
+    document.getElementById('ev-direccion').textContent =
+      [eventoData.lugar, eventoData.direccion].filter(Boolean).join(' — ') || 'Por confirmar';
+
+    if(eventoData.codigo_vestimenta){
+      document.getElementById('ev-vestimenta').textContent = eventoData.codigo_vestimenta;
+      document.getElementById('row-vestimenta').style.display = 'flex';
+    }
+
+    if(eventoData.fecha_limite_confirmacion){
+      var limite = new Date(eventoData.fecha_limite_confirmacion + 'T00:00:00');
+      var limiteTexto = limite.toLocaleDateString('es-MX', { day:'numeric', month:'long' });
+      document.getElementById('ev-fecha-limite').textContent = 'Te pedimos confirmar antes del ' + limiteTexto + '.';
+    }
+
+    document.getElementById('admin-title').textContent = 'Panel de ' + eventoData.nombre_evento;
+    return true;
+  }
+
   var guests = [];   // invitados del evento, cargados desde Supabase
   var mesasData = []; // mesas del evento, cargadas desde Supabase
 
@@ -474,7 +540,7 @@
   }
 
   async function loadFromSupabase(){
-    if(!db){
+    if(!db || !EVENTO_ID){
       document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">No se pudo conectar con la base de datos.' + (dbErrorDetail ? (' Detalle: ' + dbErrorDetail) : '') + '</div>';
       return;
     }
@@ -603,7 +669,8 @@
 
   /* ---------- Countdown ---------- */
   function renderCountdown(){
-    var target = new Date("2026-12-12T17:00:00-06:00").getTime();
+    if(!eventoData || !eventoData.fecha_evento) return;
+    var target = new Date(eventoData.fecha_evento).getTime();
     var now = Date.now();
     var diff = Math.max(0, target - now);
     var d = Math.floor(diff / 86400000);
@@ -613,7 +680,6 @@
     document.getElementById('cd-h').textContent = h;
     document.getElementById('cd-m').textContent = m;
   }
-  renderCountdown();
   setInterval(renderCountdown, 60000);
 
   /* ---------- Fake QR (deterministic pattern from a string) ---------- */
@@ -841,6 +907,17 @@
         });
       });
     }
+  }
+
+  /* ---------- Arranque ---------- */
+  var eventoOk = await cargarEvento();
+  if(!eventoOk){
+    document.getElementById('ev-eyebrow').textContent = 'EVENTO NO ENCONTRADO';
+    document.getElementById('ev-nombre').textContent = '—';
+    document.getElementById('ev-mensaje').textContent = 'No pudimos encontrar este evento. Verifica el link e intenta de nuevo.';
+    document.getElementById('rsvp-block').style.display = 'none';
+  } else {
+    renderCountdown();
   }
 
 })();
