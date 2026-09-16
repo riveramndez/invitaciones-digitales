@@ -147,6 +147,23 @@
       radial-gradient(120% 90% at 50% 0%, rgba(219,184,173,0.35), transparent 60%),
       var(--forest);
     color:var(--ivory);
+    overflow:hidden;
+  }
+  .hero .hero-bg{
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    animation: kenburns 18s ease-in-out infinite alternate;
+    z-index:0;
+  }
+  .hero .hero-overlay{
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.15), var(--forest) 92%);
+    z-index:1;
+  }
+  .hero > *:not(.hero-bg):not(.hero-overlay){ position:relative; z-index:2; }
+  @keyframes kenburns{
+    from{ transform:scale(1); }
+    to{ transform:scale(1.12); }
   }
   .hero .eyebrow{
     font-size:12.5px; color:var(--blush); letter-spacing:.14em;
@@ -334,6 +351,8 @@
 <section id="invite" class="view active">
   <div class="card">
     <div class="hero">
+      <div class="hero-bg" id="hero-bg" style="display:none;"></div>
+      <div class="hero-overlay" id="hero-overlay" style="display:none;"></div>
       <div class="eyebrow" id="ev-eyebrow">CARGANDO…</div>
       <h1 id="ev-nombre">—</h1>
       <div class="date" id="ev-fecha-lugar">—</div>
@@ -463,6 +482,16 @@
       <button id="btn-editar-evento" type="button" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">Editar este evento</button>
     </div>
 
+    <div class="panel-box" style="margin-bottom:14px;">
+      <h3>COMPARTIR INVITACIÓN</h3>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <input id="link-evento" type="text" readonly style="flex:1; min-width:200px; padding:9px 11px; border:1px solid var(--line); border-radius:4px; background:var(--ivory); color:var(--ink-soft); font-size:12.5px;">
+        <button id="btn-copiar-link" type="button" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:9px 14px; font-size:12.5px; cursor:pointer;">Copiar link</button>
+        <a id="btn-whatsapp-link" href="#" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none; border:none; background:#25D366; color:#fff; border-radius:4px; padding:9px 14px; font-size:12.5px; font-weight:600;">Enviar por WhatsApp</a>
+      </div>
+      <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">"Enviar por WhatsApp" abre un mensaje ya redactado con el link — eliges el contacto o grupo y lo mandas.</div>
+    </div>
+
     <div class="panel-box" id="nuevo-evento-box" style="display:none; margin-bottom:14px;">
       <h3 id="ne-titulo">CREAR NUEVO EVENTO</h3>
       <form id="nuevo-evento-form">
@@ -497,6 +526,10 @@
         <div class="field">
           <label for="ne-vestimenta">Código de vestimenta (opcional)</label>
           <input id="ne-vestimenta" type="text">
+        </div>
+        <div class="field">
+          <label for="ne-imagen">Imagen de fondo (URL, opcional)</label>
+          <input id="ne-imagen" type="url" placeholder="https://tudominio.pages.dev/images/foto.jpg">
         </div>
         <div id="campos-viaje" style="display:none;">
           <div class="field">
@@ -599,7 +632,7 @@
   async function cargarEvento(){
     if(!db) return false;
     var res = await db.from('eventos')
-      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa,precio_persona,hora_regreso,lugares_visitar')
+      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa,precio_persona,hora_regreso,lugares_visitar,imagen_url')
       .eq('slug', EVENTO_SLUG)
       .maybeSingle();
     if(res.error || !res.data) return false;
@@ -612,6 +645,12 @@
     document.getElementById('ev-eyebrow').textContent = TIPO_EYEBROW[eventoData.tipo_evento] || TIPO_EYEBROW.otro;
     document.getElementById('ev-nombre').textContent = eventoData.nombre_evento;
     document.getElementById('ev-mensaje').textContent = TIPO_MENSAJE[eventoData.tipo_evento] || TIPO_MENSAJE.otro;
+
+    if(eventoData.imagen_url){
+      document.getElementById('hero-bg').style.backgroundImage = 'url("' + eventoData.imagen_url + '")';
+      document.getElementById('hero-bg').style.display = 'block';
+      document.getElementById('hero-overlay').style.display = 'block';
+    }
 
     var esViaje = eventoData.tipo_evento === 'viaje';
     var fecha = new Date(eventoData.fecha_evento);
@@ -660,6 +699,15 @@
       document.getElementById('mesas-subtitulo').textContent = '· cupo según capacidad del vehículo';
       document.getElementById('th-mesa').textContent = 'Asiento';
     }
+
+    var linkPublico = window.location.origin + window.location.pathname + '?e=' + encodeURIComponent(EVENTO_SLUG);
+    document.getElementById('link-evento').value = linkPublico;
+
+    var mensajeWA = TIPO_EYEBROW[eventoData.tipo_evento] ?
+      ('¡Hola! Te comparto la invitación de "' + eventoData.nombre_evento + '". Entra al link para ver los detalles y confirmar tu asistencia:\n' + linkPublico)
+      : linkPublico;
+    document.getElementById('btn-whatsapp-link').href = 'https://wa.me/?text=' + encodeURIComponent(mensajeWA);
+
     return true;
   }
 
@@ -847,6 +895,20 @@
     nuevoEventoBox.style.display = 'block';
   });
 
+  document.getElementById('btn-copiar-link').addEventListener('click', async function(){
+    var input = document.getElementById('link-evento');
+    var btn = document.getElementById('btn-copiar-link');
+    try{
+      await navigator.clipboard.writeText(input.value);
+      btn.textContent = '¡Copiado!';
+    }catch(e){
+      input.select();
+      document.execCommand('copy');
+      btn.textContent = '¡Copiado!';
+    }
+    setTimeout(function(){ btn.textContent = 'Copiar link'; }, 1800);
+  });
+
   document.getElementById('btn-editar-evento').addEventListener('click', function(){
     if(!eventoData) return;
     editandoEventoId = eventoData.id;
@@ -859,6 +921,7 @@
     document.getElementById('ne-lugar').value = eventoData.lugar || '';
     document.getElementById('ne-direccion').value = eventoData.direccion || '';
     document.getElementById('ne-vestimenta').value = eventoData.codigo_vestimenta || '';
+    document.getElementById('ne-imagen').value = eventoData.imagen_url || '';
     document.getElementById('ne-limite').value = eventoData.fecha_limite_confirmacion || '';
     document.getElementById('ne-cupo').value = eventoData.cupo_default_mesa || 10;
 
@@ -897,6 +960,7 @@
     var lugar = document.getElementById('ne-lugar').value.trim();
     var direccion = document.getElementById('ne-direccion').value.trim();
     var vestimenta = document.getElementById('ne-vestimenta').value.trim();
+    var imagenUrl = document.getElementById('ne-imagen').value.trim();
     var limite = document.getElementById('ne-limite').value;
     var cupo = parseInt(document.getElementById('ne-cupo').value, 10) || 10;
     var esViaje = tipo === 'viaje';
@@ -927,6 +991,7 @@
         lugar: lugar || null,
         direccion: direccion || null,
         codigo_vestimenta: vestimenta || null,
+        imagen_url: imagenUrl || null,
         fecha_limite_confirmacion: limite || null,
         cupo_default_mesa: cupo,
         precio_persona: precioPersona,
