@@ -209,6 +209,17 @@
     font-size:15px; line-height:1.75; color:var(--ink-soft);
     margin:0 0 22px;
   }
+  .galeria-item{
+    flex:0 0 auto; width:150px; height:190px; border-radius:8px; overflow:hidden;
+    background:var(--ivory); border:1px solid var(--line); position:relative;
+  }
+  .galeria-item img, .galeria-item video{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .galeria-item .play-badge{
+    position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,.55);
+    color:#fff; font-size:10px; padding:3px 7px; border-radius:999px;
+  }
   .detail-row{
     display:flex; gap:14px; align-items:flex-start;
     padding:14px 0; border-top:1px solid var(--line);
@@ -374,7 +385,10 @@
 
       <div class="detail-row">
         <div class="ic">📍</div>
-        <div class="tx"><b>Lugar</b><span id="ev-direccion">—</span></div>
+        <div class="tx">
+          <b>Lugar</b><span id="ev-direccion">—</span>
+          <a id="link-mapa" href="#" target="_blank" rel="noopener" style="display:none; margin-top:6px; font-size:12.5px; color:var(--forest); font-weight:600; text-decoration:underline;">Ver ubicación en el mapa →</a>
+        </div>
       </div>
       <div class="detail-row" id="row-vestimenta" style="display:none;">
         <div class="ic" id="ic-vestimenta">👗</div>
@@ -392,6 +406,15 @@
         <div class="ic">🗺️</div>
         <div class="tx"><b>Lugares a visitar</b><span id="ev-lugares">—</span></div>
       </div>
+      <div class="detail-row" id="row-regalos" style="display:none;">
+        <div class="ic">🎁</div>
+        <div class="tx" id="tx-regalos"><b>Mesa de regalos</b><span id="ev-regalos">—</span></div>
+      </div>
+    </div>
+
+    <div id="galeria-box" style="display:none; padding:4px 30px 30px;">
+      <div style="font-size:13px; font-weight:600; color:var(--ink); margin-bottom:12px;">Galería</div>
+      <div id="galeria-scroll" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; -webkit-overflow-scrolling:touch;"></div>
     </div>
 
     <div id="cupo-viaje-box" style="display:none; padding:18px 30px; border-top:1px solid var(--line);">
@@ -508,6 +531,21 @@
       <div style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">"Enviar por WhatsApp" abre un mensaje ya redactado con el link — eliges el contacto o grupo y lo mandas.</div>
     </div>
 
+    <div class="panel-box" style="margin-bottom:14px;">
+      <h3>GALERÍA</h3>
+      <div style="font-size:11.5px; color:var(--ink-soft); margin-bottom:12px;">Fotos y videos que verán tus invitados en la invitación. Para video, puedes pegar un link de YouTube o el link directo de un archivo .mp4 que hayas subido a tu repositorio.</div>
+      <div id="admin-galeria-lista" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px; margin-bottom:14px;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <select id="gal-tipo" style="padding:9px 10px; border:1px solid var(--line); border-radius:4px; background:var(--ivory); color:var(--ink); font-size:12.5px;">
+          <option value="imagen">Foto</option>
+          <option value="video">Video</option>
+        </select>
+        <input id="gal-url" type="url" placeholder="URL de la foto o video" style="flex:1; min-width:180px; padding:9px 11px; border:1px solid var(--line); border-radius:4px; background:var(--ivory); color:var(--ink); font-size:12.5px;">
+        <button id="btn-gal-agregar" type="button" style="border:1px solid var(--forest); background:var(--forest); color:var(--ivory); border-radius:4px; padding:9px 14px; font-size:12.5px; cursor:pointer;">Agregar</button>
+      </div>
+      <div id="gal-error" style="display:none; margin-top:10px; padding:10px 12px; border-radius:4px; background:rgba(168,79,63,.12); color:var(--no); font-size:12.5px;"></div>
+    </div>
+
     <div class="panel-box" id="nuevo-evento-box" style="display:none; margin-bottom:14px;">
       <h3 id="ne-titulo">CREAR NUEVO EVENTO</h3>
       <form id="nuevo-evento-form">
@@ -546,6 +584,18 @@
         <div class="field">
           <label for="ne-imagen">Imagen de fondo (URL, opcional)</label>
           <input id="ne-imagen" type="url" placeholder="https://tudominio.pages.dev/images/foto.jpg">
+        </div>
+        <div class="field">
+          <label for="ne-mapa">Link de Google Maps (opcional)</label>
+          <input id="ne-mapa" type="url" placeholder="Pega el link para compartir de Google Maps">
+        </div>
+        <div class="field">
+          <label for="ne-regalos">Mesa de regalos (opcional)</label>
+          <input id="ne-regalos" type="text" placeholder="Link de la mesa de regalos, o datos de transferencia">
+        </div>
+        <div class="field">
+          <label for="ne-musica">Música de fondo (URL de audio .mp3, opcional)</label>
+          <input id="ne-musica" type="url" placeholder="https://tudominio.pages.dev/musica/cancion.mp3">
         </div>
         <div id="campos-viaje" style="display:none;">
           <div class="field">
@@ -607,6 +657,9 @@
   </div>
 </section>
 
+<button id="btn-musica" type="button" style="display:none; position:fixed; bottom:20px; right:20px; z-index:60; width:52px; height:52px; border-radius:50%; border:none; background:var(--forest); color:var(--ivory); font-size:20px; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:pointer;">🔊</button>
+<audio id="audio-fondo" loop preload="none"></audio>
+
 <script type="module">
 (async function(){
   "use strict";
@@ -664,7 +717,7 @@
   async function cargarEvento(){
     if(!db) return false;
     var res = await db.from('eventos')
-      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa,precio_persona,hora_regreso,lugares_visitar,imagen_url')
+      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa,precio_persona,hora_regreso,lugares_visitar,imagen_url,url_mapa,info_regalos,musica_url')
       .eq('slug', EVENTO_SLUG)
       .maybeSingle();
     if(res.error || !res.data) return false;
@@ -696,6 +749,31 @@
 
     document.getElementById('ev-direccion').textContent =
       [eventoData.lugar, eventoData.direccion].filter(Boolean).join(' — ') || 'Por confirmar';
+
+    var mapaLink = document.getElementById('link-mapa');
+    if(eventoData.url_mapa){
+      mapaLink.href = eventoData.url_mapa;
+      mapaLink.style.display = 'block';
+    } else if(eventoData.lugar || eventoData.direccion){
+      var consulta = [eventoData.lugar, eventoData.direccion].filter(Boolean).join(', ');
+      mapaLink.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(consulta);
+      mapaLink.style.display = 'block';
+    }
+
+    if(eventoData.info_regalos){
+      var esLinkRegalos = /^https?:\/\//i.test(eventoData.info_regalos.trim());
+      var txRegalos = document.getElementById('tx-regalos');
+      txRegalos.innerHTML = esLinkRegalos
+        ? '<b>Mesa de regalos</b><a href="' + escapeHtml(eventoData.info_regalos.trim()) + '" target="_blank" rel="noopener" style="color:var(--forest); font-weight:600; text-decoration:underline; font-size:13px;">Ver mesa de regalos →</a>'
+        : '<b>Mesa de regalos</b><span>' + escapeHtml(eventoData.info_regalos) + '</span>';
+      document.getElementById('row-regalos').style.display = 'flex';
+    }
+
+    if(eventoData.musica_url){
+      var audio = document.getElementById('audio-fondo');
+      audio.src = eventoData.musica_url;
+      document.getElementById('btn-musica').style.display = 'block';
+    }
 
     if(eventoData.codigo_vestimenta){
       document.getElementById('ev-vestimenta').textContent = eventoData.codigo_vestimenta;
@@ -781,6 +859,21 @@
       console.error('Error cargando datos de Supabase', mesasRes.error, guestsRes.error);
     }
   }
+
+  /* ---------- Música de fondo ---------- */
+  var btnMusica = document.getElementById('btn-musica');
+  var audioFondo = document.getElementById('audio-fondo');
+  var musicaSonando = false;
+  btnMusica.addEventListener('click', function(){
+    if(musicaSonando){
+      audioFondo.pause();
+      btnMusica.textContent = '🔊';
+    } else {
+      audioFondo.play().catch(function(){});
+      btnMusica.textContent = '⏸️';
+    }
+    musicaSonando = !musicaSonando;
+  });
 
   /* ---------- Tabs ---------- */
   var tabInvite = document.getElementById('tab-invite');
@@ -884,6 +977,7 @@
     document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">Cargando datos…</div>';
     await loadFromSupabase();
     renderAdmin();
+    cargarGaleriaAdmin();
   }
 
   /* ---------- Selector de eventos del organizador ---------- */
@@ -943,6 +1037,61 @@
     return div.innerHTML;
   }
 
+  /* ---------- Galería (fotos y videos) ---------- */
+  function youtubeId(url){
+    var m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+    return m ? m[1] : null;
+  }
+
+  function galeriaItemHtml(item, esAdmin){
+    var inner = '';
+    var yt = item.tipo === 'video' ? youtubeId(item.url) : null;
+    if(item.tipo === 'imagen'){
+      inner = '<img src="' + escapeHtml(item.url) + '" loading="lazy" alt="">';
+    } else if(yt){
+      inner = '<a href="' + escapeHtml(item.url) + '" target="_blank" rel="noopener">' +
+        '<img src="https://img.youtube.com/vi/' + yt + '/hqdefault.jpg" loading="lazy" alt="">' +
+        '<span class="play-badge">▶ Ver video</span></a>';
+    } else {
+      inner = '<video src="' + escapeHtml(item.url) + '" controls playsinline preload="metadata"></video>';
+    }
+    var borrar = esAdmin ? ('<button class="gal-borrar" data-gal-id="' + item.id + '" type="button" style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:999px; width:22px; height:22px; font-size:12px; cursor:pointer;">✕</button>') : '';
+    return '<div class="galeria-item">' + inner + borrar + '</div>';
+  }
+
+  async function cargarGaleriaGuest(){
+    if(!db || !EVENTO_ID) return;
+    var res = await db.from('galeria_evento').select('id,tipo,url,orden').eq('evento_id', EVENTO_ID).order('orden');
+    var items = res.data || [];
+    if(items.length === 0) return;
+    document.getElementById('galeria-scroll').innerHTML = items.map(function(it){ return galeriaItemHtml(it, false); }).join('');
+    document.getElementById('galeria-box').style.display = 'block';
+  }
+
+  async function cargarGaleriaAdmin(){
+    if(!db || !EVENTO_ID) return;
+    var res = await db.from('galeria_evento').select('id,tipo,url,orden').eq('evento_id', EVENTO_ID).order('orden');
+    var items = res.data || [];
+    var cont = document.getElementById('admin-galeria-lista');
+    cont.innerHTML = items.length === 0
+      ? '<div class="empty-admin">Aún no hay fotos ni videos.</div>'
+      : items.map(function(it){ return galeriaItemHtml(it, true); }).join('');
+
+    Array.prototype.forEach.call(cont.querySelectorAll('.gal-borrar'), function(btn){
+      btn.addEventListener('click', async function(){
+        var id = btn.getAttribute('data-gal-id');
+        btn.disabled = true;
+        try{
+          await db.from('galeria_evento').delete().eq('id', id);
+          await cargarGaleriaAdmin();
+        }catch(e){
+          console.error('Error borrando', e);
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
   function toDatetimeLocal(isoOrDate){
     if(!isoOrDate) return '';
     var d = new Date(isoOrDate);
@@ -981,6 +1130,29 @@
     setTimeout(function(){ btn.textContent = 'Copiar link'; }, 1800);
   });
 
+  document.getElementById('btn-gal-agregar').addEventListener('click', async function(){
+    var tipo = document.getElementById('gal-tipo').value;
+    var url = document.getElementById('gal-url').value.trim();
+    var errEl = document.getElementById('gal-error');
+    errEl.style.display = 'none';
+    if(!url){ return; }
+    if(!EVENTO_ID){ return; }
+
+    var btn = document.getElementById('btn-gal-agregar');
+    btn.disabled = true;
+    try{
+      var res = await db.from('galeria_evento').insert([{ evento_id: EVENTO_ID, tipo: tipo, url: url, orden: 0 }]);
+      if(res.error) throw res.error;
+      document.getElementById('gal-url').value = '';
+      await cargarGaleriaAdmin();
+    }catch(err){
+      errEl.textContent = (err && err.message) ? err.message : 'No se pudo agregar.';
+      errEl.style.display = 'block';
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
   document.getElementById('btn-editar-evento').addEventListener('click', function(){
     if(!eventoData) return;
     editandoEventoId = eventoData.id;
@@ -994,6 +1166,9 @@
     document.getElementById('ne-direccion').value = eventoData.direccion || '';
     document.getElementById('ne-vestimenta').value = eventoData.codigo_vestimenta || '';
     document.getElementById('ne-imagen').value = eventoData.imagen_url || '';
+    document.getElementById('ne-mapa').value = eventoData.url_mapa || '';
+    document.getElementById('ne-regalos').value = eventoData.info_regalos || '';
+    document.getElementById('ne-musica').value = eventoData.musica_url || '';
     document.getElementById('ne-limite').value = eventoData.fecha_limite_confirmacion || '';
     document.getElementById('ne-cupo').value = eventoData.cupo_default_mesa || 10;
 
@@ -1035,6 +1210,9 @@
     var direccion = document.getElementById('ne-direccion').value.trim();
     var vestimenta = document.getElementById('ne-vestimenta').value.trim();
     var imagenUrl = document.getElementById('ne-imagen').value.trim();
+    var urlMapa = document.getElementById('ne-mapa').value.trim();
+    var infoRegalos = document.getElementById('ne-regalos').value.trim();
+    var musicaUrl = document.getElementById('ne-musica').value.trim();
     var limite = document.getElementById('ne-limite').value;
     var cupo = parseInt(document.getElementById('ne-cupo').value, 10) || 10;
     var esViaje = tipo === 'viaje';
@@ -1066,6 +1244,9 @@
         direccion: direccion || null,
         codigo_vestimenta: vestimenta || null,
         imagen_url: imagenUrl || null,
+        url_mapa: urlMapa || null,
+        info_regalos: infoRegalos || null,
+        musica_url: musicaUrl || null,
         fecha_limite_confirmacion: limite || null,
         cupo_default_mesa: cupo,
         precio_persona: precioPersona,
@@ -1417,6 +1598,7 @@
     renderCountdown();
     document.getElementById('g-pases').dispatchEvent(new Event('input'));
     await actualizarCupoViaje();
+    cargarGaleriaGuest();
   }
 
 })();
