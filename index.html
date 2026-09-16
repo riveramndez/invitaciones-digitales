@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renata & Mateo — Invitación Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22201b;
+    --ink-soft:#55524a;
+    --ivory:#faf6ee;
+    --panel:#ffffff;
+    --forest:#2f3e34;
+    --forest-2:#1f2a23;
+    --blush:#dbb8ad;
+    --brass:#a9803f;
+    --brass-soft:#c9a25f;
+    --line: rgba(34,32,27,0.12);
+    --ok:#3f6b4c;
+    --pend:#a9803f;
+    --no:#a84f3f;
+    --shadow: 0 18px 40px rgba(31,42,35,0.14);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --ink:#f2ede1;
+      --ink-soft:#c9c2b2;
+      --ivory:#14140f;
+      --panel:#1c1c16;
+      --forest:#7fa389;
+      --forest-2:#a9c7b1;
+      --blush:#c79b8e;
+      --brass:#d6ad6d;
+      --brass-soft:#e3c084;
+      --line: rgba(242,237,225,0.14);
+      --shadow: 0 18px 40px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#f2ede1;
+    --ink-soft:#c9c2b2;
+    --ivory:#14140f;
+    --panel:#1c1c16;
+    --forest:#7fa389;
+    --forest-2:#a9c7b1;
+    --blush:#c79b8e;
+    --brass:#d6ad6d;
+    --brass-soft:#e3c084;
+    --line: rgba(242,237,225,0.14);
+    --shadow: 0 18px 40px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ivory);
+    color:var(--ink);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--blush); color:var(--forest-2);}
+
+  /* Top switch */
+  .switcher{
+    position:sticky; top:0; z-index:50;
+    display:flex; justify-content:center; gap:8px;
+    padding:14px 12px;
+    background:linear-gradient(var(--ivory) 70%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .switcher button{
+    font-family:'Work Sans', sans-serif;
+    font-size:13px; letter-spacing:.02em;
+    padding:9px 18px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:.2s;
+  }
+  .switcher button.active{
+    background:var(--forest);
+    color:var(--ivory);
+    border-color:var(--forest);
+  }
+
+  .view{display:none; animation:fade .35s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  /* ============ INVITATION VIEW ============ */
+  #invite{
+    max-width:480px;
+    margin:0 auto 60px;
+    padding:0 18px;
+  }
+  .card{
+    background:var(--panel);
+    border-radius:2px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .hero{
+    position:relative;
+    padding:56px 30px 40px;
+    text-align:center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(219,184,173,0.35), transparent 60%),
+      var(--forest);
+    color:var(--ivory);
+  }
+  .hero .eyebrow{
+    font-size:12.5px; color:var(--blush); letter-spacing:.14em;
+    margin-bottom:18px;
+  }
+  .hero h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:52px;
+    line-height:1.05;
+    margin:0 0 6px;
+  }
+  .hero .amp{
+    font-style:italic; color:var(--blush); font-size:30px; display:block; margin:4px 0;
+  }
+  .hero .date{
+    margin-top:22px;
+    font-size:14.5px;
+    color:#e6dfd2;
+    line-height:1.7;
+  }
+  .hero .date strong{color:var(--ivory); font-weight:600;}
+
+  .countdown{
+    display:flex; justify-content:center; gap:18px;
+    margin-top:26px;
+  }
+  .countdown div{text-align:center;}
+  .countdown .n{
+    font-family:'Cormorant Garamond', serif;
+    font-size:28px; font-weight:600; color:var(--ivory);
+  }
+  .countdown .l{font-size:10px; letter-spacing:.1em; color:var(--blush);}
+
+  .body-block{padding:34px 30px 10px;}
+  .body-block p{
+    font-size:15px; line-height:1.75; color:var(--ink-soft);
+    margin:0 0 22px;
+  }
+  .detail-row{
+    display:flex; gap:14px; align-items:flex-start;
+    padding:14px 0; border-top:1px solid var(--line);
+  }
+  .detail-row:first-of-type{border-top:none;}
+  .detail-row .ic{font-size:18px; color:var(--brass); width:22px; text-align:center; flex-shrink:0;}
+  .detail-row .tx b{display:block; font-size:14.5px; color:var(--ink);}
+  .detail-row .tx span{font-size:13px; color:var(--ink-soft);}
+
+  .rsvp{padding:30px 30px 36px; border-top:1px solid var(--line); margin-top:10px;}
+  .rsvp h2{
+    font-family:'Cormorant Garamond', serif;
+    font-size:24px; font-weight:600; margin:0 0 4px;
+  }
+  .rsvp .sub{font-size:13px; color:var(--ink-soft); margin-bottom:20px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:11px 13px;
+    border:1px solid var(--line); border-radius:4px;
+    background:var(--ivory); color:var(--ink);
+    font-family:'Work Sans', sans-serif; font-size:14px;
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .choice-row{display:flex; gap:10px;}
+  .choice-row label{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    gap:6px; padding:11px 10px; border:1px solid var(--line); border-radius:4px;
+    font-size:13.5px; cursor:pointer; color:var(--ink-soft);
+  }
+  .choice-row input{width:auto; margin:0;}
+  .choice-row input:checked + span{color:var(--forest); font-weight:600;}
+  .btn-primary{
+    width:100%; padding:13px; margin-top:6px;
+    background:var(--forest); color:var(--ivory);
+    border:none; border-radius:4px; font-size:14px; font-weight:600;
+    letter-spacing:.02em; cursor:pointer; transition:.2s;
+    font-family:'Work Sans', sans-serif;
+  }
+  .btn-primary:hover{background:var(--forest-2);}
+
+  .pass{
+    padding:28px 30px 36px; border-top:1px solid var(--line);
+    text-align:center; display:none;
+  }
+  .pass.show{display:block; animation:fade .4s ease;}
+  .pass .stub{
+    border:1px dashed var(--brass);
+    border-radius:6px; padding:20px;
+    background:var(--ivory);
+  }
+  .pass h3{font-family:'Cormorant Garamond', serif; font-size:22px; margin:0 0 2px;}
+  .pass .status{
+    display:inline-block; margin:8px 0 16px; padding:4px 12px;
+    border-radius:999px; font-size:11.5px; letter-spacing:.05em;
+  }
+  .status.ok{background:rgba(63,107,76,.15); color:var(--ok);}
+  .status.no{background:rgba(168,79,63,.15); color:var(--no);}
+  #qr{margin:0 auto 12px;}
+  .pass .code{font-size:11px; color:var(--ink-soft); letter-spacing:.08em;}
+
+  .rsvp-note{font-size:12px; color:var(--ink-soft); text-align:center; margin-top:16px;}
+
+  /* ============ ADMIN VIEW ============ */
+  #admin{max-width:1080px; margin:0 auto 70px; padding:0 18px;}
+  .admin-head{padding:6px 4px 22px;}
+  .admin-head h1{
+    font-family:'Cormorant Garamond', serif; font-size:30px; margin:0 0 4px; font-weight:600;
+  }
+  .admin-head p{font-size:13.5px; color:var(--ink-soft); margin:0;}
+
+  .grid-cards{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px; margin-bottom:14px;
+  }
+  .stat-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:16px 18px;
+  }
+  .stat-card .k{font-size:11.5px; color:var(--ink-soft); letter-spacing:.03em; margin-bottom:8px;}
+  .stat-card .v{font-family:'Cormorant Garamond', serif; font-size:32px; font-weight:600; color:var(--forest);}
+  .stat-card.accent .v{color:var(--brass);}
+
+  .grid-two{display:grid; grid-template-columns:1.3fr 1fr; gap:12px; margin-bottom:12px;}
+  @media (max-width:760px){.grid-two{grid-template-columns:1fr;}}
+
+  .panel-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:20px;
+  }
+  .panel-box h3{
+    font-size:13px; letter-spacing:.02em; color:var(--ink-soft); margin:0 0 16px; font-weight:600;
+  }
+
+  .donut-wrap{display:flex; align-items:center; gap:20px;}
+  .donut-wrap .legend{font-size:12.5px; line-height:2;}
+  .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px;}
+
+  table.guest-table{width:100%; border-collapse:collapse; font-size:13px;}
+  table.guest-table th{
+    text-align:left; font-weight:600; color:var(--ink-soft); font-size:11px;
+    letter-spacing:.03em; padding:8px 6px; border-bottom:1px solid var(--line);
+  }
+  table.guest-table td{padding:9px 6px; border-bottom:1px solid var(--line); color:var(--ink);}
+  .pill{
+    padding:3px 9px; border-radius:999px; font-size:11px; font-weight:500;
+  }
+  .pill.ok{background:rgba(63,107,76,.15); color:var(--ok);}
+  .pill.pend{background:rgba(169,128,63,.15); color:var(--pend);}
+  .pill.no{background:rgba(168,79,63,.15); color:var(--no);}
+
+  .bars{display:flex; align-items:flex-end; gap:6px; height:90px; margin-top:6px;}
+  .bars .bar{flex:1; background:var(--forest); border-radius:3px 3px 0 0; opacity:.85;}
+
+  .mesas-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;}
+  .mesa-card{
+    border:1px solid var(--line); border-radius:6px; padding:12px 14px;
+  }
+  .mesa-card .name{font-size:12.5px; font-weight:600; margin-bottom:8px;}
+  .mesa-card .row{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
+  .mesa-card .track{height:6px; border-radius:999px; background:var(--line); overflow:hidden;}
+  .mesa-card .fill{height:100%; border-radius:999px; background:var(--ok);}
+  .mesa-card.over .fill{background:var(--no);}
+  .mesa-card.over .row{color:var(--no);}
+  .mesa-card .warn{font-size:11px; color:var(--no); margin-top:6px;}
+
+  .empty-admin{font-size:13px; color:var(--ink-soft); padding:10px 2px;}
+
+  footer{
+    text-align:center; font-size:11.5px; color:var(--ink-soft);
+    padding:20px; opacity:.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button id="tab-invite" class="active">Vista del invitado</button>
+  <button id="tab-admin">Panel del organizador</button>
+</div>
+
+<!-- ================= INVITATION VIEW ================= -->
+<section id="invite" class="view active">
+  <div class="card">
+    <div class="hero">
+      <div class="eyebrow">NOS CASAMOS</div>
+      <h1>Renata<span class="amp">&amp;</span>Mateo</h1>
+      <div class="date">Sábado <strong>12 de diciembre, 2026</strong><br>5:00 PM · Hacienda San Rafael</div>
+      <div class="countdown" id="countdown">
+        <div><div class="n" id="cd-d">—</div><div class="l">DÍAS</div></div>
+        <div><div class="n" id="cd-h">—</div><div class="l">HRS</div></div>
+        <div><div class="n" id="cd-m">—</div><div class="l">MIN</div></div>
+      </div>
+    </div>
+
+    <div class="body-block">
+      <p>Con la bendición de nuestras familias, queremos compartir contigo el inicio de esta nueva etapa. Tu presencia es el regalo más importante que podemos recibir.</p>
+
+      <div class="detail-row">
+        <div class="ic">⛪</div>
+        <div class="tx"><b>Ceremonia religiosa</b><span>Parroquia San Rafael · 5:00 PM</span></div>
+      </div>
+      <div class="detail-row">
+        <div class="ic">🥂</div>
+        <div class="tx"><b>Recepción</b><span>Hacienda San Rafael, Salón Jardín · 6:30 PM</span></div>
+      </div>
+      <div class="detail-row">
+        <div class="ic">👗</div>
+        <div class="tx"><b>Código de vestimenta</b><span>Formal — tonos tierra y verdes</span></div>
+      </div>
+    </div>
+
+    <div class="rsvp" id="rsvp-block">
+      <h2>Confirma tu asistencia</h2>
+      <div class="sub">Te pedimos confirmar antes del 20 de noviembre.</div>
+
+      <form id="rsvp-form">
+        <div class="field">
+          <label for="g-name">Nombre completo</label>
+          <input id="g-name" type="text" placeholder="Ej. Luis Enrique Vargas" required>
+        </div>
+
+        <div class="field">
+          <label>¿Podrás acompañarnos?</label>
+          <div class="choice-row">
+            <label><input type="radio" name="asiste" value="si" checked><span>Sí, asistiré</span></label>
+            <label><input type="radio" name="asiste" value="no"><span>No podré ir</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="g-phone">Teléfono (opcional)</label>
+          <input id="g-phone" type="tel" placeholder="Ej. 55 1234 5678">
+        </div>
+
+        <div class="field">
+          <label for="g-pases">Número de acompañantes (incluyéndote)</label>
+          <input id="g-pases" type="number" min="1" max="20" value="1" inputmode="numeric">
+        </div>
+
+        <div class="field">
+          <label for="g-msg">Mensaje para los novios (opcional)</label>
+          <textarea id="g-msg" placeholder="Escribe unas palabras…"></textarea>
+        </div>
+
+        <button type="submit" class="btn-primary">Enviar confirmación</button>
+        <div id="rsvp-error" style="display:none; margin-top:12px; padding:10px 12px; border-radius:4px; background:rgba(168,79,63,.12); color:var(--no); font-size:13px;"></div>
+      </form>
+      <div class="rsvp-note">Al confirmar, generamos tu pase digital con QR para el día del evento.</div>
+    </div>
+
+    <div class="pass" id="pass-block">
+      <div class="stub">
+        <div id="pass-status-wrap"></div>
+        <h3 id="pass-name">—</h3>
+        <div id="qr"></div>
+        <div class="code" id="pass-code">—</div>
+      </div>
+      <div class="rsvp-note" id="pass-msg" style="margin-top:14px;"></div>
+    </div>
+  </div>
+  <footer>Prototipo de invitación digital — conectado a base de datos real (Supabase).</footer>
+</section>
+
+<!-- ================= ADMIN VIEW ================= -->
+<section id="admin" class="view">
+  <div class="admin-head">
+    <h1>Panel de Renata &amp; Mateo</h1>
+    <p>Resumen del evento en tiempo real</p>
+  </div>
+
+  <div class="grid-cards" id="stat-cards"></div>
+
+  <div class="grid-two">
+    <div class="panel-box">
+      <h3>CONFIRMACIONES POR DÍA</h3>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="panel-box">
+      <h3>ESTATUS DE INVITADOS</h3>
+      <div class="donut-wrap">
+        <svg width="110" height="110" viewBox="0 0 42 42" id="donut"></svg>
+        <div class="legend" id="donut-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-box" style="margin-bottom:12px;">
+    <h3>OCUPACIÓN DE MESAS <span style="font-weight:400; color:var(--ink-soft); text-transform:none; letter-spacing:0;">· cupo según mobiliario de cada mesa</span></h3>
+    <div id="mesas-grid" class="mesas-grid"></div>
+  </div>
+
+  <div class="panel-box">
+    <h3>LISTA DE INVITADOS</h3>
+    <table class="guest-table" id="guest-table">
+      <thead><tr><th>Nombre</th><th>Pases</th><th>Estatus</th><th>Mesa</th></tr></thead>
+      <tbody id="guest-tbody"></tbody>
+    </table>
+    <div class="empty-admin" id="empty-msg" style="display:none;">Aún no hay invitados registrados.</div>
+  </div>
+  <footer>Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "Renata &amp; Mateo".</footer>
+</section>
+
+<script type="module">
+(async function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://ujmvlborpsaikzbpyxjw.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_7U9no2mzjwg-1_tDg4JcLg_sqNh_dLy";
+  var EVENTO_ID = "cfde150e-e3cb-42da-a379-abfa5b3bd233"; // evento "Renata & Mateo"
+
+  var db = null;
+  var dbErrorDetail = '';
+  try{
+    var mod = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    db = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(e){
+    dbErrorDetail = (e && e.message) ? e.message : String(e);
+    console.error('No se pudo inicializar Supabase', e);
+  }
+
+  var guests = [];   // invitados del evento, cargados desde Supabase
+  var mesasData = []; // mesas del evento, cargadas desde Supabase
+
+  function mesaInfo(mesaId){
+    var m = mesasData.find(function(x){ return x.id === mesaId; });
+    return m ? { cupo: m.cupo, nombre: m.nombre } : { cupo: 10, nombre: 'Sin nombre' };
+  }
+
+  async function loadFromSupabase(){
+    if(!db){
+      document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">No se pudo conectar con la base de datos.' + (dbErrorDetail ? (' Detalle: ' + dbErrorDetail) : '') + '</div>';
+      return;
+    }
+    var mesasRes = await db.from('mesas').select('id,nombre,cupo,orden').eq('evento_id', EVENTO_ID).order('orden');
+    var guestsRes = await db.from('invitados').select('id,nombre,telefono,pases,estatus,mesa_id,mensaje,creado_en').eq('evento_id', EVENTO_ID).order('creado_en', {ascending:false});
+
+    mesasData = (mesasRes.data || []).map(function(m){
+      return { id: m.id, nombre: m.nombre, cupo: m.cupo };
+    });
+
+    guests = (guestsRes.data || []).map(function(g){
+      var dias = Math.floor((Date.now() - new Date(g.creado_en).getTime()) / 86400000);
+      return {
+        id: g.id, name: g.nombre, status: g.estatus, pases: g.pases,
+        mesa: g.mesa_id, dias: dias
+      };
+    });
+
+    if(mesasRes.error || guestsRes.error){
+      console.error('Error cargando datos de Supabase', mesasRes.error, guestsRes.error);
+    }
+  }
+
+  /* ---------- Tabs ---------- */
+  var tabInvite = document.getElementById('tab-invite');
+  var tabAdmin = document.getElementById('tab-admin');
+  var viewInvite = document.getElementById('invite');
+  var viewAdmin = document.getElementById('admin');
+
+  tabInvite.addEventListener('click', function(){
+    tabInvite.classList.add('active'); tabAdmin.classList.remove('active');
+    viewInvite.classList.add('active'); viewAdmin.classList.remove('active');
+  });
+  tabAdmin.addEventListener('click', async function(){
+    tabAdmin.classList.add('active'); tabInvite.classList.remove('active');
+    viewAdmin.classList.add('active'); viewInvite.classList.remove('active');
+    document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">Cargando datos…</div>';
+    await loadFromSupabase();
+    renderAdmin();
+  });
+
+  /* ---------- Countdown ---------- */
+  function renderCountdown(){
+    var target = new Date("2026-12-12T17:00:00-06:00").getTime();
+    var now = Date.now();
+    var diff = Math.max(0, target - now);
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    document.getElementById('cd-d').textContent = d;
+    document.getElementById('cd-h').textContent = h;
+    document.getElementById('cd-m').textContent = m;
+  }
+  renderCountdown();
+  setInterval(renderCountdown, 60000);
+
+  /* ---------- Fake QR (deterministic pattern from a string) ---------- */
+  function hashStr(s){
+    var h = 0;
+    for(var i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h|=0; }
+    return Math.abs(h);
+  }
+  function renderQR(seedStr, size){
+    size = size || 132;
+    var cells = 11;
+    var cell = size/cells;
+    var h = hashStr(seedStr);
+    var svg = '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'">';
+    svg += '<rect width="'+size+'" height="'+size+'" fill="var(--panel)"/>';
+    var rnd = h;
+    function next(){ rnd = (rnd * 1103515245 + 12345) & 0x7fffffff; return rnd; }
+    for(var r=0;r<cells;r++){
+      for(var c=0;c<cells;c++){
+        var isFinder = (r<3&&c<3)||(r<3&&c>cells-4)||(r>cells-4&&c<3);
+        var on = isFinder ? ((r%2===0||c%2===0)) : (next()%3===0);
+        if(on){
+          svg += '<rect x="'+(c*cell)+'" y="'+(r*cell)+'" width="'+cell+'" height="'+cell+'" fill="var(--forest)"/>';
+        }
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+
+  /* ---------- RSVP form ---------- */
+  var form = document.getElementById('rsvp-form');
+  var passBlock = document.getElementById('pass-block');
+  var rsvpBlock = document.getElementById('rsvp-block');
+
+  function showFormError(msg){
+    var el = document.getElementById('rsvp-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function hideFormError(){
+    document.getElementById('rsvp-error').style.display = 'none';
+  }
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    hideFormError();
+    var name = document.getElementById('g-name').value.trim();
+    if(!name) return;
+    var phone = document.getElementById('g-phone').value.trim();
+    var asiste = document.querySelector('input[name="asiste"]:checked').value;
+    var pases = parseInt(document.getElementById('g-pases').value, 10);
+    if(!pases || pases < 1) pases = 1;
+    if(pases > 20) pases = 20;
+    var msg = document.getElementById('g-msg').value.trim();
+    var status = asiste === 'si' ? 'confirmado' : 'declinado';
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando…';
+
+    var code = hashStr(name + Date.now()).toString(16).toUpperCase().slice(0,8);
+
+    if(!db){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar confirmación';
+      showFormError('No se pudo conectar con la base de datos.' + (dbErrorDetail ? (' Detalle: ' + dbErrorDetail) : ''));
+      return;
+    }
+
+    try{
+      var res = await db.from('invitados').insert([{
+        evento_id: EVENTO_ID,
+        nombre: name,
+        telefono: phone || null,
+        pases: pases,
+        estatus: status,
+        mensaje: msg || null
+      }]);
+      if(res.error) throw res.error;
+    }catch(err){
+      console.error('Error guardando confirmación', err);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar confirmación';
+      var detail = (err && err.message) ? err.message : String(err);
+      showFormError('No pudimos guardar tu confirmación. Detalle: ' + detail);
+      return;
+    }
+
+    document.getElementById('pass-name').textContent = name;
+    document.getElementById('pass-code').textContent = 'PASE · ' + code;
+    document.getElementById('pass-status-wrap').innerHTML =
+      status === 'confirmado'
+        ? '<span class="status ok">Asistencia confirmada</span>'
+        : '<span class="status no">No podrás asistir</span>';
+    document.getElementById('qr').innerHTML = status === 'confirmado' ? renderQR(name+code) : '';
+    document.getElementById('pass-msg').textContent = status === 'confirmado'
+      ? '¡Nos dará mucho gusto verte ahí! Guarda este pase, lo pedirán en la entrada.'
+      : 'Gracias por avisarnos. ¡Te extrañaremos!';
+
+    rsvpBlock.style.display = 'none';
+    passBlock.classList.add('show');
+  });
+
+  /* ---------- Admin render ---------- */
+  function renderAdmin(){
+    var total = guests.length;
+    var confirmados = guests.filter(function(g){return g.status==='confirmado';});
+    var declinados = guests.filter(function(g){return g.status==='declinado';});
+    var pendientes = guests.filter(function(g){return g.status==='pendiente';});
+    var pasesConfirmados = confirmados.reduce(function(a,g){return a+g.pases;},0);
+    var conMesa = guests.filter(function(g){return g.mesa;}).length;
+
+    var cards = [
+      {k:'INVITADOS', v: total},
+      {k:'CONFIRMADOS', v: confirmados.length},
+      {k:'DECLINADOS', v: declinados.length},
+      {k:'PENDIENTES', v: pendientes.length},
+      {k:'PASES CONFIRMADOS', v: pasesConfirmados, accent:true},
+      {k:'CON MESA ASIGNADA', v: conMesa, accent:true}
+    ];
+    document.getElementById('stat-cards').innerHTML = cards.map(function(c){
+      return '<div class="stat-card'+(c.accent?' accent':'')+'"><div class="k">'+c.k+'</div><div class="v">'+c.v+'</div></div>';
+    }).join('');
+
+    /* bars: group confirmations by "dias" field (mock days-ago bucket) */
+    var buckets = [0,0,0,0,0,0,0];
+    confirmados.forEach(function(g){
+      var idx = Math.min(6, g.dias || 0);
+      buckets[6-idx] += 1;
+    });
+    var max = Math.max.apply(null, buckets.concat([1]));
+    document.getElementById('bars').innerHTML = buckets.map(function(v){
+      var h = Math.max(6, Math.round((v/max)*90));
+      return '<div class="bar" style="height:'+h+'px" title="'+v+'"></div>';
+    }).join('');
+
+    /* donut */
+    var segs = [
+      {v: confirmados.length, color:'var(--ok)'},
+      {v: pendientes.length, color:'var(--pend)'},
+      {v: declinados.length, color:'var(--no)'}
+    ];
+    var sum = segs.reduce(function(a,s){return a+s.v;},0) || 1;
+    var acc = 0;
+    var circumference = 2*Math.PI*15.9155;
+    var donutSvg = '';
+    segs.forEach(function(s){
+      var frac = s.v/sum;
+      var dash = frac*circumference;
+      donutSvg += '<circle cx="21" cy="21" r="15.9155" fill="none" stroke="'+s.color+'" stroke-width="6" '+
+        'stroke-dasharray="'+dash+' '+(circumference-dash)+'" stroke-dashoffset="'+(-acc*circumference)+'"/>';
+      acc += frac;
+    });
+    document.getElementById('donut').innerHTML =
+      '<circle cx="21" cy="21" r="15.9155" fill="none" stroke="var(--line)" stroke-width="6"/>' + donutSvg;
+    document.getElementById('donut-legend').innerHTML =
+      '<div><span class="dot" style="background:var(--ok)"></span>Confirmados ('+confirmados.length+')</div>'+
+      '<div><span class="dot" style="background:var(--pend)"></span>Pendientes ('+pendientes.length+')</div>'+
+      '<div><span class="dot" style="background:var(--no)"></span>Declinados ('+declinados.length+')</div>';
+
+    /* mesas: occupancy vs cupo real de cada mesa (viene de Supabase) */
+    var mesaMap = {};
+    guests.forEach(function(g){
+      if(g.mesa){
+        if(!mesaMap[g.mesa]) mesaMap[g.mesa] = 0;
+        mesaMap[g.mesa] += (g.pases || 1);
+      }
+    });
+    var mesaIds = Object.keys(mesaMap);
+    var mesasHtml = '';
+    if(mesasData.length === 0){
+      mesasHtml = '<div class="empty-admin">Este evento aún no tiene mesas registradas.</div>';
+    } else if(mesaIds.length === 0){
+      mesasHtml = '<div class="empty-admin">Hay '+mesasData.length+' mesa(s) creadas, pero aún nadie tiene mesa asignada.</div>';
+    } else {
+      mesasHtml = mesaIds.map(function(mid){
+        var info = mesaInfo(mid);
+        var count = mesaMap[mid];
+        var over = count > info.cupo;
+        var pct = Math.min(100, Math.round((count/info.cupo)*100));
+        return '<div class="mesa-card'+(over?' over':'')+'">'+
+          '<div class="name">'+info.nombre+'</div>'+
+          '<div class="row"><span>'+count+' / '+info.cupo+' personas</span></div>'+
+          '<div class="track"><div class="fill" style="width:'+pct+'%"></div></div>'+
+          (over ? '<div class="warn">⚠ Excede el cupo por '+(count-info.cupo)+'</div>' : '')+
+          '</div>';
+      }).join('');
+    }
+    document.getElementById('mesas-grid').innerHTML = mesasHtml;
+
+    /* table */
+    var tbody = document.getElementById('guest-tbody');
+    if(guests.length===0){
+      document.getElementById('empty-msg').style.display='block';
+      tbody.innerHTML='';
+    } else {
+      document.getElementById('empty-msg').style.display='none';
+      tbody.innerHTML = guests.slice().reverse().map(function(g){
+        var pillClass = g.status==='confirmado'?'ok':(g.status==='declinado'?'no':'pend');
+        var mesaNombre = g.mesa ? mesaInfo(g.mesa).nombre : '—';
+        return '<tr><td>'+g.name+'</td><td>'+g.pases+'</td>'+
+          '<td><span class="pill '+pillClass+'">'+g.status+'</span></td>'+
+          '<td>'+mesaNombre+'</td></tr>';
+      }).join('');
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
