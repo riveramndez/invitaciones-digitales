@@ -381,10 +381,38 @@
 
 <!-- ================= ADMIN VIEW ================= -->
 <section id="admin" class="view">
-  <div class="admin-head">
-    <h1>Panel de Renata &amp; Mateo</h1>
-    <p>Resumen del evento en tiempo real</p>
+  <div id="admin-login" class="card" style="max-width:380px; margin:0 auto;">
+    <div style="padding:34px 30px;">
+      <h2 style="font-family:'Cormorant Garamond', serif; font-size:24px; margin:0 0 4px;">Acceso del organizador</h2>
+      <div class="sub" style="margin-bottom:20px;">Inicia sesión para ver y administrar tu evento.</div>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="auth-email">Correo</label>
+          <input id="auth-email" type="email" required placeholder="tucorreo@ejemplo.com">
+        </div>
+        <div class="field">
+          <label for="auth-password">Contraseña</label>
+          <input id="auth-password" type="password" required placeholder="Mínimo 6 caracteres" minlength="6">
+        </div>
+        <button type="submit" class="btn-primary" id="login-btn">Iniciar sesión</button>
+      </form>
+      <div style="text-align:center; margin-top:14px;">
+        <a href="#" id="toggle-signup" style="font-size:13px; color:var(--ink-soft); text-decoration:underline;">¿Aún no tienes cuenta? Crear una</a>
+      </div>
+      <div id="auth-error" style="display:none; margin-top:14px; padding:10px 12px; border-radius:4px; background:rgba(168,79,63,.12); color:var(--no); font-size:13px;"></div>
+      <div id="auth-info" style="display:none; margin-top:14px; padding:10px 12px; border-radius:4px; background:rgba(63,107,76,.12); color:var(--ok); font-size:13px;"></div>
+    </div>
   </div>
+
+  <div id="admin-content" style="display:none;">
+    <div class="admin-head" style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1>Panel de Renata &amp; Mateo</h1>
+        <p>Resumen del evento en tiempo real</p>
+      </div>
+      <button id="logout-btn" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">Cerrar sesión</button>
+    </div>
 
   <div class="grid-cards" id="stat-cards"></div>
 
@@ -416,6 +444,7 @@
     <div class="empty-admin" id="empty-msg" style="display:none;">Aún no hay invitados registrados.</div>
   </div>
   <footer>Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "Renata &amp; Mateo".</footer>
+  </div>
 </section>
 
 <script type="module">
@@ -482,10 +511,95 @@
   tabAdmin.addEventListener('click', async function(){
     tabAdmin.classList.add('active'); tabInvite.classList.remove('active');
     viewAdmin.classList.add('active'); viewInvite.classList.remove('active');
+    await checkAuthAndShow();
+  });
+
+  /* ---------- Auth (login del organizador) ---------- */
+  var isSignupMode = false;
+  var loginForm = document.getElementById('login-form');
+  var loginBtn = document.getElementById('login-btn');
+  var toggleSignup = document.getElementById('toggle-signup');
+  var authErrorEl = document.getElementById('auth-error');
+  var authInfoEl = document.getElementById('auth-info');
+  var adminLoginEl = document.getElementById('admin-login');
+  var adminContentEl = document.getElementById('admin-content');
+
+  function showAuthError(msg){
+    authInfoEl.style.display = 'none';
+    authErrorEl.textContent = msg;
+    authErrorEl.style.display = 'block';
+  }
+  function showAuthInfo(msg){
+    authErrorEl.style.display = 'none';
+    authInfoEl.textContent = msg;
+    authInfoEl.style.display = 'block';
+  }
+  function clearAuthMsgs(){
+    authErrorEl.style.display = 'none';
+    authInfoEl.style.display = 'none';
+  }
+
+  toggleSignup.addEventListener('click', function(e){
+    e.preventDefault();
+    isSignupMode = !isSignupMode;
+    loginBtn.textContent = isSignupMode ? 'Crear cuenta' : 'Iniciar sesión';
+    toggleSignup.textContent = isSignupMode ? '¿Ya tienes cuenta? Iniciar sesión' : '¿Aún no tienes cuenta? Crear una';
+    clearAuthMsgs();
+  });
+
+  loginForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    clearAuthMsgs();
+    if(!db){ showAuthError('No se pudo conectar con la base de datos.'); return; }
+    var email = document.getElementById('auth-email').value.trim();
+    var password = document.getElementById('auth-password').value;
+    loginBtn.disabled = true;
+
+    try{
+      if(isSignupMode){
+        var res = await db.auth.signUp({ email: email, password: password });
+        if(res.error) throw res.error;
+        if(res.data && res.data.session){
+          await checkAuthAndShow();
+        } else {
+          showAuthInfo('Cuenta creada. Revisa tu correo para confirmar tu cuenta y después inicia sesión.');
+        }
+      } else {
+        var res2 = await db.auth.signInWithPassword({ email: email, password: password });
+        if(res2.error) throw res2.error;
+        await checkAuthAndShow();
+      }
+    }catch(err){
+      showAuthError(err && err.message ? err.message : 'No se pudo completar la operación.');
+    }finally{
+      loginBtn.disabled = false;
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async function(){
+    if(db) await db.auth.signOut();
+    adminContentEl.style.display = 'none';
+    adminLoginEl.style.display = 'block';
+  });
+
+  async function checkAuthAndShow(){
+    if(!db){
+      document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">No se pudo conectar con la base de datos.</div>';
+      return;
+    }
+    var sessionRes = await db.auth.getSession();
+    var session = sessionRes.data ? sessionRes.data.session : null;
+    if(!session){
+      adminLoginEl.style.display = 'block';
+      adminContentEl.style.display = 'none';
+      return;
+    }
+    adminLoginEl.style.display = 'none';
+    adminContentEl.style.display = 'block';
     document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">Cargando datos…</div>';
     await loadFromSupabase();
     renderAdmin();
-  });
+  }
 
   /* ---------- Countdown ---------- */
   function renderCountdown(){
