@@ -29,9 +29,10 @@ export async function onRequest(context) {
 
   let nombreEvento = null;
   let tipoEvento = 'otro';
+  let imagenUrl = null;
 
   try {
-    const apiUrl = SUPABASE_URL + '/rest/v1/eventos?select=nombre_evento,tipo_evento&slug=eq.' + encodeURIComponent(slug) + '&limit=1';
+    const apiUrl = SUPABASE_URL + '/rest/v1/eventos?select=nombre_evento,tipo_evento,imagen_url&slug=eq.' + encodeURIComponent(slug) + '&limit=1';
     const res = await fetch(apiUrl, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
@@ -43,6 +44,7 @@ export async function onRequest(context) {
       if (data && data.length > 0) {
         nombreEvento = data[0].nombre_evento;
         tipoEvento = data[0].tipo_evento;
+        imagenUrl = data[0].imagen_url;
       }
     }
   } catch (e) {
@@ -69,6 +71,12 @@ export async function onRequest(context) {
           element.setAttribute('content', titulo);
         } else if (prop === 'og:description') {
           element.setAttribute('content', descripcion);
+        } else if (prop === 'og:image') {
+          if (imagenUrl) {
+            element.setAttribute('content', imagenUrl);
+          } else {
+            element.remove();
+          }
         }
       }
     }
@@ -78,6 +86,7 @@ export async function onRequest(context) {
     .on('title', new ReescribirMeta())
     .on('meta[property="og:title"]', new ReescribirMeta())
     .on('meta[property="og:description"]', new ReescribirMeta())
+    .on('meta[property="og:image"]', new ReescribirMeta())
     .transform(response);
 }
 
