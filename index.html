@@ -460,10 +460,11 @@
       <label for="mis-eventos" style="font-size:12.5px; color:var(--ink-soft);">Tus eventos:</label>
       <select id="mis-eventos" style="flex:1; min-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:4px; background:var(--ivory); color:var(--ink); font-size:13px;"></select>
       <button id="btn-nuevo-evento" type="button" style="border:1px solid var(--forest); background:var(--forest); color:var(--ivory); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">+ Nuevo evento</button>
+      <button id="btn-editar-evento" type="button" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">Editar este evento</button>
     </div>
 
     <div class="panel-box" id="nuevo-evento-box" style="display:none; margin-bottom:14px;">
-      <h3>CREAR NUEVO EVENTO</h3>
+      <h3 id="ne-titulo">CREAR NUEVO EVENTO</h3>
       <form id="nuevo-evento-form">
         <div class="field">
           <label for="ne-nombre">Nombre del evento (ej. "Sofía & Carlos" o "Ximena")</label>
@@ -541,14 +542,14 @@
   </div>
 
   <div class="panel-box" style="margin-bottom:12px;">
-    <h3>OCUPACIÓN DE MESAS <span style="font-weight:400; color:var(--ink-soft); text-transform:none; letter-spacing:0;">· cupo según mobiliario de cada mesa</span></h3>
+    <h3 id="mesas-titulo">OCUPACIÓN DE MESAS <span style="font-weight:400; color:var(--ink-soft); text-transform:none; letter-spacing:0;" id="mesas-subtitulo">· cupo según mobiliario de cada mesa</span></h3>
     <div id="mesas-grid" class="mesas-grid"></div>
   </div>
 
   <div class="panel-box">
     <h3>LISTA DE INVITADOS</h3>
     <table class="guest-table" id="guest-table">
-      <thead><tr><th>Nombre</th><th>Pases</th><th>Estatus</th><th>Mesa</th><th id="th-pago" style="display:none;">Pago</th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Pases</th><th>Estatus</th><th id="th-mesa">Mesa</th><th id="th-pago" style="display:none;">Pago</th></tr></thead>
       <tbody id="guest-tbody"></tbody>
     </table>
     <div class="empty-admin" id="empty-msg" style="display:none;">Aún no hay invitados registrados.</div>
@@ -653,6 +654,12 @@
 
     document.getElementById('admin-title').textContent = 'Panel de ' + eventoData.nombre_evento;
     document.getElementById('admin-footer').textContent = 'Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "' + eventoData.nombre_evento + '".';
+
+    if(esViaje){
+      document.getElementById('mesas-titulo').firstChild.textContent = 'OCUPACIÓN DEL VEHÍCULO ';
+      document.getElementById('mesas-subtitulo').textContent = '· cupo según capacidad del vehículo';
+      document.getElementById('th-mesa').textContent = 'Asiento';
+    }
     return true;
   }
 
@@ -814,8 +821,60 @@
   });
 
   var nuevoEventoBox = document.getElementById('nuevo-evento-box');
+  var editandoEventoId = null; // null = modo "crear"; con valor = modo "editar"
+
+  function toDatetimeLocal(isoOrDate){
+    if(!isoOrDate) return '';
+    var d = new Date(isoOrDate);
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+
+  function resetFormularioEvento(){
+    editandoEventoId = null;
+    document.getElementById('ne-titulo').textContent = 'CREAR NUEVO EVENTO';
+    document.getElementById('ne-submit-btn').textContent = 'Crear evento';
+    document.getElementById('nuevo-evento-form').reset();
+    document.getElementById('campos-viaje').style.display = 'none';
+  }
+
   document.getElementById('btn-nuevo-evento').addEventListener('click', function(){
-    nuevoEventoBox.style.display = (nuevoEventoBox.style.display === 'none') ? 'block' : 'none';
+    if(nuevoEventoBox.style.display !== 'none' && editandoEventoId === null){
+      nuevoEventoBox.style.display = 'none';
+      return;
+    }
+    resetFormularioEvento();
+    nuevoEventoBox.style.display = 'block';
+  });
+
+  document.getElementById('btn-editar-evento').addEventListener('click', function(){
+    if(!eventoData) return;
+    editandoEventoId = eventoData.id;
+    document.getElementById('ne-titulo').textContent = 'EDITAR EVENTO';
+    document.getElementById('ne-submit-btn').textContent = 'Guardar cambios';
+
+    document.getElementById('ne-nombre').value = eventoData.nombre_evento || '';
+    document.getElementById('ne-tipo').value = eventoData.tipo_evento || 'boda';
+    document.getElementById('ne-fecha').value = toDatetimeLocal(eventoData.fecha_evento);
+    document.getElementById('ne-lugar').value = eventoData.lugar || '';
+    document.getElementById('ne-direccion').value = eventoData.direccion || '';
+    document.getElementById('ne-vestimenta').value = eventoData.codigo_vestimenta || '';
+    document.getElementById('ne-limite').value = eventoData.fecha_limite_confirmacion || '';
+    document.getElementById('ne-cupo').value = eventoData.cupo_default_mesa || 10;
+
+    var esViaje = eventoData.tipo_evento === 'viaje';
+    document.getElementById('campos-viaje').style.display = esViaje ? 'block' : 'none';
+    document.getElementById('ne-fecha-label-extra').textContent = esViaje ? '(salida)' : '';
+    document.getElementById('ne-lugar-label-extra').textContent = esViaje ? '(punto de salida)' : '';
+    document.getElementById('ne-cupo-label').textContent = esViaje ? 'Cupo del vehículo (personas)' : 'Cupo por mesa (default)';
+    if(esViaje){
+      document.getElementById('ne-precio').value = eventoData.precio_persona || '';
+      document.getElementById('ne-regreso').value = toDatetimeLocal(eventoData.hora_regreso);
+      document.getElementById('ne-lugares').value = eventoData.lugares_visitar || '';
+    }
+
+    nuevoEventoBox.style.display = 'block';
+    nuevoEventoBox.scrollIntoView({ behavior:'smooth', block:'start' });
   });
 
   document.getElementById('ne-tipo').addEventListener('change', function(e){
@@ -855,14 +914,13 @@
     }
 
     btn.disabled = true;
-    btn.textContent = 'Creando…';
+    btn.textContent = editandoEventoId ? 'Guardando…' : 'Creando…';
 
     try{
       var sessionRes = await db.auth.getSession();
       var userId = sessionRes.data.session.user.id;
 
-      var insertRes = await db.from('eventos').insert([{
-        slug: slugify(nombre),
+      var datosEvento = {
         nombre_evento: nombre,
         tipo_evento: tipo,
         fecha_evento: new Date(fechaLocal).toISOString(),
@@ -873,9 +931,20 @@
         cupo_default_mesa: cupo,
         precio_persona: precioPersona,
         hora_regreso: horaRegresoLocal ? new Date(horaRegresoLocal).toISOString() : null,
-        lugares_visitar: lugaresVisitar || null,
-        owner_id: userId
-      }]).select('id,slug').single();
+        lugares_visitar: lugaresVisitar || null
+      };
+
+      if(editandoEventoId){
+        var updateRes = await db.from('eventos').update(datosEvento).eq('id', editandoEventoId);
+        if(updateRes.error) throw updateRes.error;
+        window.location.reload();
+        return;
+      }
+
+      datosEvento.slug = slugify(nombre);
+      datosEvento.owner_id = userId;
+
+      var insertRes = await db.from('eventos').insert([datosEvento]).select('id,slug').single();
 
       if(insertRes.error) throw insertRes.error;
 
@@ -896,7 +965,7 @@
       errEl.textContent = (err && err.message) ? err.message : 'No se pudo crear el evento.';
       errEl.style.display = 'block';
       btn.disabled = false;
-      btn.textContent = 'Crear evento';
+      btn.textContent = editandoEventoId ? 'Guardar cambios' : 'Crear evento';
     }
   });
 
@@ -1032,7 +1101,7 @@
       {k:'DECLINADOS', v: declinados.length},
       {k:'PENDIENTES', v: pendientes.length},
       {k:'PASES CONFIRMADOS', v: pasesConfirmados, accent:true},
-      {k:'CON MESA ASIGNADA', v: conMesa, accent:true}
+      {k: (eventoData && eventoData.tipo_evento==='viaje') ? 'CON ASIENTO ASIGNADO' : 'CON MESA ASIGNADA', v: conMesa, accent:true}
     ];
     if(eventoData && eventoData.precio_persona){
       var totalEsperado = confirmados.reduce(function(a,g){return a + Number(eventoData.precio_persona)*g.pases;},0);
@@ -1093,7 +1162,10 @@
     if(mesasData.length === 0){
       mesasHtml = '<div class="empty-admin">Este evento aún no tiene mesas registradas.</div>';
     } else if(mesaIds.length === 0){
-      mesasHtml = '<div class="empty-admin">Hay '+mesasData.length+' mesa(s) creadas, pero aún nadie tiene mesa asignada.</div>';
+      var esViajeAdmin = eventoData && eventoData.tipo_evento === 'viaje';
+      var palabraMesa = esViajeAdmin ? 'vehículo(s)' : 'mesa(s)';
+      var palabraAsignado = esViajeAdmin ? 'asiento asignado' : 'mesa asignada';
+      mesasHtml = '<div class="empty-admin">Hay '+mesasData.length+' '+palabraMesa+' creado(s), pero aún nadie tiene '+palabraAsignado+'.</div>';
     } else {
       mesasHtml = mesaIds.map(function(mid){
         var info = mesaInfo(mid);
@@ -1122,7 +1194,7 @@
       document.getElementById('empty-msg').style.display='none';
       tbody.innerHTML = guests.slice().reverse().map(function(g){
         var pillClass = g.status==='confirmado'?'ok':(g.status==='declinado'?'no':'pend');
-        var options = '<option value="">— Sin mesa —</option>' + mesasData.map(function(m){
+        var options = '<option value="">'+((eventoData && eventoData.tipo_evento==='viaje') ? '— Sin asiento —' : '— Sin mesa —')+'</option>' + mesasData.map(function(m){
           var sel = (g.mesa === m.id) ? ' selected' : '';
           return '<option value="'+m.id+'"'+sel+'>'+m.nombre+'</option>';
         }).join('');
