@@ -261,6 +261,10 @@
   .pill.ok{background:rgba(63,107,76,.15); color:var(--ok);}
   .pill.pend{background:rgba(169,128,63,.15); color:var(--pend);}
   .pill.no{background:rgba(168,79,63,.15); color:var(--no);}
+  select.mesa-select{
+    font-family:'Work Sans', sans-serif; font-size:12.5px; padding:5px 8px;
+    border:1px solid var(--line); border-radius:4px; background:var(--panel); color:var(--ink);
+  }
 
   .bars{display:flex; align-items:flex-end; gap:6px; height:90px; margin-top:6px;}
   .bars .bar{flex:1; background:var(--forest); border-radius:3px 3px 0 0; opacity:.85;}
@@ -696,11 +700,32 @@
       document.getElementById('empty-msg').style.display='none';
       tbody.innerHTML = guests.slice().reverse().map(function(g){
         var pillClass = g.status==='confirmado'?'ok':(g.status==='declinado'?'no':'pend');
-        var mesaNombre = g.mesa ? mesaInfo(g.mesa).nombre : '—';
+        var options = '<option value="">— Sin mesa —</option>' + mesasData.map(function(m){
+          var sel = (g.mesa === m.id) ? ' selected' : '';
+          return '<option value="'+m.id+'"'+sel+'>'+m.nombre+'</option>';
+        }).join('');
         return '<tr><td>'+g.name+'</td><td>'+g.pases+'</td>'+
           '<td><span class="pill '+pillClass+'">'+g.status+'</span></td>'+
-          '<td>'+mesaNombre+'</td></tr>';
+          '<td><select class="mesa-select" data-guest-id="'+g.id+'">'+options+'</select></td></tr>';
       }).join('');
+
+      Array.prototype.forEach.call(tbody.querySelectorAll('.mesa-select'), function(sel){
+        sel.addEventListener('change', async function(){
+          var guestId = sel.getAttribute('data-guest-id');
+          var mesaId = sel.value || null;
+          sel.disabled = true;
+          try{
+            var res = await db.from('invitados').update({ mesa_id: mesaId }).eq('id', guestId);
+            if(res.error) throw res.error;
+            await loadFromSupabase();
+            renderAdmin();
+          }catch(err){
+            console.error('Error asignando mesa', err);
+            sel.disabled = false;
+            alert('No se pudo asignar la mesa. Intenta de nuevo.');
+          }
+        });
+      });
     }
   }
 
