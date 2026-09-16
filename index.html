@@ -375,8 +375,8 @@
         <div class="tx"><b>Lugar</b><span id="ev-direccion">—</span></div>
       </div>
       <div class="detail-row" id="row-vestimenta" style="display:none;">
-        <div class="ic">👗</div>
-        <div class="tx"><b>Código de vestimenta</b><span id="ev-vestimenta">—</span></div>
+        <div class="ic" id="ic-vestimenta">👗</div>
+        <div class="tx"><b id="lbl-vestimenta">Código de vestimenta</b><span id="ev-vestimenta">—</span></div>
       </div>
       <div class="detail-row" id="row-precio" style="display:none;">
         <div class="ic">💵</div>
@@ -528,7 +528,7 @@
           <input id="ne-direccion" type="text">
         </div>
         <div class="field">
-          <label for="ne-vestimenta">Código de vestimenta (opcional)</label>
+          <label for="ne-vestimenta" id="ne-vestimenta-label">Código de vestimenta (opcional)</label>
           <input id="ne-vestimenta" type="text">
         </div>
         <div class="field">
@@ -678,6 +678,10 @@
     if(eventoData.codigo_vestimenta){
       document.getElementById('ev-vestimenta').textContent = eventoData.codigo_vestimenta;
       document.getElementById('row-vestimenta').style.display = 'flex';
+      if(esViaje){
+        document.getElementById('ic-vestimenta').textContent = '🎒';
+        document.getElementById('lbl-vestimenta').textContent = 'Qué llevar';
+      }
     }
 
     if(esViaje){
@@ -947,6 +951,7 @@
     document.getElementById('ne-fecha-label-extra').textContent = esViaje ? '(salida)' : '';
     document.getElementById('ne-lugar-label-extra').textContent = esViaje ? '(punto de salida)' : '';
     document.getElementById('ne-cupo-label').textContent = esViaje ? 'Cupo del vehículo (personas)' : 'Cupo por mesa (default)';
+    document.getElementById('ne-vestimenta-label').textContent = esViaje ? 'Qué llevar (opcional)' : 'Código de vestimenta (opcional)';
     if(esViaje){
       document.getElementById('ne-precio').value = eventoData.precio_persona || '';
       document.getElementById('ne-regreso').value = toDatetimeLocal(eventoData.hora_regreso);
@@ -963,6 +968,7 @@
     document.getElementById('ne-fecha-label-extra').textContent = esViaje ? '(salida)' : '';
     document.getElementById('ne-lugar-label-extra').textContent = esViaje ? '(punto de salida)' : '';
     document.getElementById('ne-cupo-label').textContent = esViaje ? 'Cupo del vehículo (personas)' : 'Cupo por mesa (default)';
+    document.getElementById('ne-vestimenta-label').textContent = esViaje ? 'Qué llevar (opcional)' : 'Código de vestimenta (opcional)';
   });
 
   document.getElementById('nuevo-evento-form').addEventListener('submit', async function(e){
