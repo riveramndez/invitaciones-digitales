@@ -421,7 +421,7 @@
         </div>
 
         <div class="field">
-          <label for="g-msg">Mensaje para los novios (opcional)</label>
+          <label for="g-msg" id="lbl-mensaje">Mensaje para los novios (opcional)</label>
           <textarea id="g-msg" placeholder="Escribe unas palabras…"></textarea>
         </div>
 
@@ -639,6 +639,15 @@
     viaje: 'Confirma tu lugar para este viaje en grupo. Cupo limitado, ¡no te quedes fuera!',
     otro: 'Nos encantaría contar con tu presencia en este día tan especial.'
   };
+  var TIPO_LABEL_MENSAJE = {
+    boda: 'Mensaje para los novios (opcional)',
+    xv: 'Mensaje para la festejada (opcional)',
+    bautizo: 'Mensaje para la familia (opcional)',
+    cumpleanos: 'Mensaje para el festejado (opcional)',
+    baby_shower: 'Mensaje para los papás (opcional)',
+    viaje: 'Mensaje para el organizador (opcional)',
+    otro: 'Mensaje para el anfitrión (opcional)'
+  };
 
   async function cargarEvento(){
     if(!db) return false;
@@ -656,6 +665,7 @@
     document.getElementById('ev-eyebrow').textContent = TIPO_EYEBROW[eventoData.tipo_evento] || TIPO_EYEBROW.otro;
     document.getElementById('ev-nombre').textContent = eventoData.nombre_evento;
     document.getElementById('ev-mensaje').textContent = TIPO_MENSAJE[eventoData.tipo_evento] || TIPO_MENSAJE.otro;
+    document.getElementById('lbl-mensaje').textContent = TIPO_LABEL_MENSAJE[eventoData.tipo_evento] || TIPO_LABEL_MENSAJE.otro;
 
     if(eventoData.imagen_url){
       document.getElementById('hero-bg').style.backgroundImage = 'url("' + eventoData.imagen_url + '")';
