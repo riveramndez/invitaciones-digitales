@@ -62,6 +62,22 @@
     --brass-soft:#d4a017;
     --shadow: 0 18px 40px rgba(122,44,71,0.18);
   }
+  body[data-tema="bautizo"]{
+    --forest:#4a6fa5;
+    --forest-2:#375685;
+    --blush:#d6e4f0;
+    --brass:#9c8a5e;
+    --brass-soft:#b8a570;
+    --shadow: 0 18px 40px rgba(55,86,133,0.16);
+  }
+  body[data-tema="cumpleanos"]{
+    --forest:#c45a2c;
+    --forest-2:#9c4520;
+    --blush:#ffd9b3;
+    --brass:#d4a017;
+    --brass-soft:#e8b830;
+    --shadow: 0 18px 40px rgba(156,69,32,0.16);
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
@@ -412,12 +428,65 @@
   </div>
 
   <div id="admin-content" style="display:none;">
-    <div class="admin-head" style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div class="admin-head" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
       <div>
         <h1 id="admin-title">Panel del organizador</h1>
         <p>Resumen del evento en tiempo real</p>
       </div>
       <button id="logout-btn" style="border:1px solid var(--line); background:var(--panel); color:var(--ink-soft); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">Cerrar sesión</button>
+    </div>
+
+    <div class="panel-box" style="margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <label for="mis-eventos" style="font-size:12.5px; color:var(--ink-soft);">Tus eventos:</label>
+      <select id="mis-eventos" style="flex:1; min-width:160px; padding:8px 10px; border:1px solid var(--line); border-radius:4px; background:var(--ivory); color:var(--ink); font-size:13px;"></select>
+      <button id="btn-nuevo-evento" type="button" style="border:1px solid var(--forest); background:var(--forest); color:var(--ivory); border-radius:4px; padding:8px 14px; font-size:12.5px; cursor:pointer;">+ Nuevo evento</button>
+    </div>
+
+    <div class="panel-box" id="nuevo-evento-box" style="display:none; margin-bottom:14px;">
+      <h3>CREAR NUEVO EVENTO</h3>
+      <form id="nuevo-evento-form">
+        <div class="field">
+          <label for="ne-nombre">Nombre del evento (ej. "Sofía & Carlos" o "Ximena")</label>
+          <input id="ne-nombre" type="text" required>
+        </div>
+        <div class="field">
+          <label for="ne-tipo">Tipo de evento</label>
+          <select id="ne-tipo">
+            <option value="boda">Boda</option>
+            <option value="xv">XV años</option>
+            <option value="bautizo">Bautizo</option>
+            <option value="cumpleanos">Cumpleaños</option>
+            <option value="baby_shower">Baby shower</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ne-fecha">Fecha y hora</label>
+          <input id="ne-fecha" type="datetime-local" required>
+        </div>
+        <div class="field">
+          <label for="ne-lugar">Lugar</label>
+          <input id="ne-lugar" type="text">
+        </div>
+        <div class="field">
+          <label for="ne-direccion">Dirección</label>
+          <input id="ne-direccion" type="text">
+        </div>
+        <div class="field">
+          <label for="ne-vestimenta">Código de vestimenta (opcional)</label>
+          <input id="ne-vestimenta" type="text">
+        </div>
+        <div class="field">
+          <label for="ne-limite">Fecha límite para confirmar (opcional)</label>
+          <input id="ne-limite" type="date">
+        </div>
+        <div class="field">
+          <label for="ne-cupo">Cupo por mesa (default)</label>
+          <input id="ne-cupo" type="number" min="1" max="30" value="10">
+        </div>
+        <button type="submit" class="btn-primary" id="ne-submit-btn">Crear evento</button>
+        <div id="ne-error" style="display:none; margin-top:12px; padding:10px 12px; border-radius:4px; background:rgba(168,79,63,.12); color:var(--no); font-size:13px;"></div>
+      </form>
     </div>
 
   <div class="grid-cards" id="stat-cards"></div>
@@ -449,7 +518,7 @@
     </table>
     <div class="empty-admin" id="empty-msg" style="display:none;">Aún no hay invitados registrados.</div>
   </div>
-  <footer>Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "Renata &amp; Mateo".</footer>
+  <footer id="admin-footer">Datos en vivo desde Supabase — proyecto "Invitaciones-digitales".</footer>
   </div>
 </section>
 
@@ -528,6 +597,7 @@
     }
 
     document.getElementById('admin-title').textContent = 'Panel de ' + eventoData.nombre_evento;
+    document.getElementById('admin-footer').textContent = 'Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "' + eventoData.nombre_evento + '".';
     return true;
   }
 
@@ -662,10 +732,100 @@
     }
     adminLoginEl.style.display = 'none';
     adminContentEl.style.display = 'block';
+    await cargarMisEventos(session.user.id);
     document.getElementById('stat-cards').innerHTML = '<div class="empty-admin">Cargando datos…</div>';
     await loadFromSupabase();
     renderAdmin();
   }
+
+  /* ---------- Selector de eventos del organizador ---------- */
+  async function cargarMisEventos(userId){
+    var sel = document.getElementById('mis-eventos');
+    var res = await db.from('eventos').select('slug,nombre_evento,tipo_evento').eq('owner_id', userId).order('creado_en', {ascending:false});
+    var eventos = res.data || [];
+    if(eventos.length === 0){
+      sel.innerHTML = '<option value="">No tienes eventos todavía</option>';
+      return;
+    }
+    sel.innerHTML = eventos.map(function(e){
+      var sel2 = (e.slug === EVENTO_SLUG) ? ' selected' : '';
+      return '<option value="'+e.slug+'"'+sel2+'>'+e.nombre_evento+'</option>';
+    }).join('');
+  }
+
+  document.getElementById('mis-eventos').addEventListener('change', function(e){
+    var slug = e.target.value;
+    if(slug) window.location.search = '?e=' + encodeURIComponent(slug);
+  });
+
+  var nuevoEventoBox = document.getElementById('nuevo-evento-box');
+  document.getElementById('btn-nuevo-evento').addEventListener('click', function(){
+    nuevoEventoBox.style.display = (nuevoEventoBox.style.display === 'none') ? 'block' : 'none';
+  });
+
+  document.getElementById('nuevo-evento-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var errEl = document.getElementById('ne-error');
+    errEl.style.display = 'none';
+    var btn = document.getElementById('ne-submit-btn');
+
+    var nombre = document.getElementById('ne-nombre').value.trim();
+    var tipo = document.getElementById('ne-tipo').value;
+    var fechaLocal = document.getElementById('ne-fecha').value; // "2026-11-14T19:00"
+    var lugar = document.getElementById('ne-lugar').value.trim();
+    var direccion = document.getElementById('ne-direccion').value.trim();
+    var vestimenta = document.getElementById('ne-vestimenta').value.trim();
+    var limite = document.getElementById('ne-limite').value;
+    var cupo = parseInt(document.getElementById('ne-cupo').value, 10) || 10;
+
+    if(!nombre || !fechaLocal){ return; }
+
+    function slugify(s){
+      return s.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        + '-' + Math.random().toString(36).slice(2,6);
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Creando…';
+
+    try{
+      var sessionRes = await db.auth.getSession();
+      var userId = sessionRes.data.session.user.id;
+
+      var insertRes = await db.from('eventos').insert([{
+        slug: slugify(nombre),
+        nombre_evento: nombre,
+        tipo_evento: tipo,
+        fecha_evento: new Date(fechaLocal).toISOString(),
+        lugar: lugar || null,
+        direccion: direccion || null,
+        codigo_vestimenta: vestimenta || null,
+        fecha_limite_confirmacion: limite || null,
+        cupo_default_mesa: cupo,
+        owner_id: userId
+      }]).select('id,slug').single();
+
+      if(insertRes.error) throw insertRes.error;
+
+      var nuevoId = insertRes.data.id;
+      var nuevoSlug = insertRes.data.slug;
+
+      await db.from('mesas').insert([
+        { evento_id: nuevoId, nombre: 'Mesa principal', cupo: cupo, orden: 0 },
+        { evento_id: nuevoId, nombre: 'Mesa 2', cupo: cupo, orden: 1 },
+        { evento_id: nuevoId, nombre: 'Mesa 3', cupo: cupo, orden: 2 }
+      ]);
+
+      window.location.search = '?e=' + encodeURIComponent(nuevoSlug);
+    }catch(err){
+      errEl.textContent = (err && err.message) ? err.message : 'No se pudo crear el evento.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Crear evento';
+    }
+  });
 
   /* ---------- Countdown ---------- */
   function renderCountdown(){
