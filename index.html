@@ -441,7 +441,7 @@
       <div class="rsvp-note" id="pass-msg" style="margin-top:14px;"></div>
     </div>
   </div>
-  <footer>Prototipo de invitación digital — conectado a base de datos real (Supabase).</footer>
+  <footer>Hecho por <a id="link-riyan-guest" href="#" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Riyan</a></footer>
 </section>
 
 <!-- ================= ADMIN VIEW ================= -->
@@ -591,7 +591,7 @@
     </table>
     <div class="empty-admin" id="empty-msg" style="display:none;">Aún no hay invitados registrados.</div>
   </div>
-  <footer id="admin-footer">Datos en vivo desde Supabase — proyecto "Invitaciones-digitales".</footer>
+  <footer id="admin-footer">Datos en vivo desde Supabase — proyecto "Invitaciones-digitales". · <a id="link-riyan-admin" href="#" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Riyan</a></footer>
   </div>
 </section>
 
@@ -601,6 +601,13 @@
 
   var SUPABASE_URL = "https://ujmvlborpsaikzbpyxjw.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_7U9no2mzjwg-1_tDg4JcLg_sqNh_dLy";
+
+  // Para cambiar el número de contacto de "Riyan" (el link al final de las páginas),
+  // solo edita esta línea — se usa en todo el archivo desde un solo lugar.
+  var NUMERO_WHATSAPP_RIYAN = "5215664527042";
+  var MENSAJE_CONTACTO_RIYAN = "Hola, vi una invitación digital y me interesa una para mi evento";
+  var LINK_RIYAN = "https://wa.me/" + NUMERO_WHATSAPP_RIYAN + "?text=" + encodeURIComponent(MENSAJE_CONTACTO_RIYAN);
+  document.getElementById('link-riyan-guest').href = LINK_RIYAN;
 
   // El evento se elige por la URL: ?e=slug (ej. ?e=ximena-xv). Sin parámetro,
   // cae en el evento de boda de pruebas.
@@ -696,7 +703,7 @@
     }
 
     document.getElementById('admin-title').textContent = 'Panel de ' + eventoData.nombre_evento;
-    document.getElementById('admin-footer').textContent = 'Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "' + eventoData.nombre_evento + '".';
+    document.getElementById('admin-footer').innerHTML = 'Datos en vivo desde Supabase — proyecto "Invitaciones-digitales", evento "' + escapeHtml(eventoData.nombre_evento) + '". · <a id="link-riyan-admin" href="' + LINK_RIYAN + '" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Riyan</a>';
 
     if(esViaje){
       document.getElementById('mesas-titulo').firstChild.textContent = 'OCUPACIÓN DEL VEHÍCULO ';
@@ -874,6 +881,12 @@
 
   var nuevoEventoBox = document.getElementById('nuevo-evento-box');
   var editandoEventoId = null; // null = modo "crear"; con valor = modo "editar"
+
+  function escapeHtml(s){
+    var div = document.createElement('div');
+    div.textContent = s == null ? '' : String(s);
+    return div.innerHTML;
+  }
 
   function toDatetimeLocal(isoOrDate){
     if(!isoOrDate) return '';
