@@ -78,6 +78,14 @@
     --brass-soft:#e8b830;
     --shadow: 0 18px 40px rgba(156,69,32,0.16);
   }
+  body[data-tema="viaje"]{
+    --forest:#2c6e7f;
+    --forest-2:#1f5563;
+    --blush:#c9e4ea;
+    --brass:#b8860b;
+    --brass-soft:#d4a017;
+    --shadow: 0 18px 40px rgba(31,85,99,0.16);
+  }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
@@ -347,6 +355,18 @@
         <div class="ic">👗</div>
         <div class="tx"><b>Código de vestimenta</b><span id="ev-vestimenta">—</span></div>
       </div>
+      <div class="detail-row" id="row-precio" style="display:none;">
+        <div class="ic">💵</div>
+        <div class="tx"><b>Costo</b><span id="ev-precio">—</span></div>
+      </div>
+      <div class="detail-row" id="row-regreso" style="display:none;">
+        <div class="ic">🕗</div>
+        <div class="tx"><b>Hora de regreso</b><span id="ev-regreso">—</span></div>
+      </div>
+      <div class="detail-row" id="row-lugares" style="display:none;">
+        <div class="ic">🗺️</div>
+        <div class="tx"><b>Lugares a visitar</b><span id="ev-lugares">—</span></div>
+      </div>
     </div>
 
     <div class="rsvp" id="rsvp-block">
@@ -457,15 +477,16 @@
             <option value="bautizo">Bautizo</option>
             <option value="cumpleanos">Cumpleaños</option>
             <option value="baby_shower">Baby shower</option>
+            <option value="viaje">Viaje en grupo</option>
             <option value="otro">Otro</option>
           </select>
         </div>
         <div class="field">
-          <label for="ne-fecha">Fecha y hora</label>
+          <label for="ne-fecha">Fecha y hora <span id="ne-fecha-label-extra"></span></label>
           <input id="ne-fecha" type="datetime-local" required>
         </div>
         <div class="field">
-          <label for="ne-lugar">Lugar</label>
+          <label for="ne-lugar">Lugar <span id="ne-lugar-label-extra"></span></label>
           <input id="ne-lugar" type="text">
         </div>
         <div class="field">
@@ -476,12 +497,26 @@
           <label for="ne-vestimenta">Código de vestimenta (opcional)</label>
           <input id="ne-vestimenta" type="text">
         </div>
+        <div id="campos-viaje" style="display:none;">
+          <div class="field">
+            <label for="ne-precio">Precio por persona (MXN)</label>
+            <input id="ne-precio" type="number" min="0" step="1">
+          </div>
+          <div class="field">
+            <label for="ne-regreso">Hora aproximada de regreso</label>
+            <input id="ne-regreso" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="ne-lugares">Lugares a visitar</label>
+            <input id="ne-lugares" type="text" placeholder="Ej. Cascada X, Pueblo Y">
+          </div>
+        </div>
         <div class="field">
           <label for="ne-limite">Fecha límite para confirmar (opcional)</label>
           <input id="ne-limite" type="date">
         </div>
         <div class="field">
-          <label for="ne-cupo">Cupo por mesa (default)</label>
+          <label for="ne-cupo" id="ne-cupo-label">Cupo por mesa (default)</label>
           <input id="ne-cupo" type="number" min="1" max="30" value="10">
         </div>
         <button type="submit" class="btn-primary" id="ne-submit-btn">Crear evento</button>
@@ -548,7 +583,7 @@
 
   var TIPO_EYEBROW = {
     boda: 'NOS CASAMOS', xv: 'MIS XV AÑOS', bautizo: 'MI BAUTIZO',
-    cumpleanos: 'MI CUMPLEAÑOS', baby_shower: 'BABY SHOWER', otro: 'ESTÁS INVITADO'
+    cumpleanos: 'MI CUMPLEAÑOS', baby_shower: 'BABY SHOWER', viaje: 'VIAJE EN GRUPO', otro: 'ESTÁS INVITADO'
   };
   var TIPO_MENSAJE = {
     boda: 'Con la bendición de nuestras familias, queremos compartir contigo el inicio de esta nueva etapa. Tu presencia es el regalo más importante que podemos recibir.',
@@ -556,13 +591,14 @@
     bautizo: 'Con gran alegría te invitamos a celebrar este día tan especial en nuestra fe y en nuestra familia.',
     cumpleanos: '¡Queremos celebrar contigo un día más de vida! Tu compañía hará de este festejo algo inolvidable.',
     baby_shower: 'Con mucha emoción te invitamos a celebrar la llegada de nuestro bebé.',
+    viaje: 'Confirma tu lugar para este viaje en grupo. Cupo limitado, ¡no te quedes fuera!',
     otro: 'Nos encantaría contar con tu presencia en este día tan especial.'
   };
 
   async function cargarEvento(){
     if(!db) return false;
     var res = await db.from('eventos')
-      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa')
+      .select('id,nombre_evento,tipo_evento,fecha_evento,lugar,direccion,codigo_vestimenta,fecha_limite_confirmacion,cupo_default_mesa,precio_persona,hora_regreso,lugares_visitar')
       .eq('slug', EVENTO_SLUG)
       .maybeSingle();
     if(res.error || !res.data) return false;
@@ -576,11 +612,14 @@
     document.getElementById('ev-nombre').textContent = eventoData.nombre_evento;
     document.getElementById('ev-mensaje').textContent = TIPO_MENSAJE[eventoData.tipo_evento] || TIPO_MENSAJE.otro;
 
+    var esViaje = eventoData.tipo_evento === 'viaje';
     var fecha = new Date(eventoData.fecha_evento);
     var fechaTexto = fecha.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     var horaTexto = fecha.toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' });
     document.getElementById('ev-fecha-lugar').innerHTML =
-      fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1) + '<br>' + horaTexto + (eventoData.lugar ? (' · ' + eventoData.lugar) : '');
+      fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1) + '<br>' +
+      (esViaje ? ('Salida ' + horaTexto) : horaTexto) +
+      (eventoData.lugar ? (' · ' + eventoData.lugar) : '');
 
     document.getElementById('ev-direccion').textContent =
       [eventoData.lugar, eventoData.direccion].filter(Boolean).join(' — ') || 'Por confirmar';
@@ -588,6 +627,22 @@
     if(eventoData.codigo_vestimenta){
       document.getElementById('ev-vestimenta').textContent = eventoData.codigo_vestimenta;
       document.getElementById('row-vestimenta').style.display = 'flex';
+    }
+
+    if(esViaje){
+      if(eventoData.precio_persona){
+        document.getElementById('ev-precio').textContent = '$' + Number(eventoData.precio_persona).toLocaleString('es-MX') + ' MXN por persona';
+        document.getElementById('row-precio').style.display = 'flex';
+      }
+      if(eventoData.hora_regreso){
+        var regreso = new Date(eventoData.hora_regreso);
+        document.getElementById('ev-regreso').textContent = 'Aproximadamente ' + regreso.toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' });
+        document.getElementById('row-regreso').style.display = 'flex';
+      }
+      if(eventoData.lugares_visitar){
+        document.getElementById('ev-lugares').textContent = eventoData.lugares_visitar;
+        document.getElementById('row-lugares').style.display = 'flex';
+      }
     }
 
     if(eventoData.fecha_limite_confirmacion){
@@ -763,6 +818,14 @@
     nuevoEventoBox.style.display = (nuevoEventoBox.style.display === 'none') ? 'block' : 'none';
   });
 
+  document.getElementById('ne-tipo').addEventListener('change', function(e){
+    var esViaje = e.target.value === 'viaje';
+    document.getElementById('campos-viaje').style.display = esViaje ? 'block' : 'none';
+    document.getElementById('ne-fecha-label-extra').textContent = esViaje ? '(salida)' : '';
+    document.getElementById('ne-lugar-label-extra').textContent = esViaje ? '(punto de salida)' : '';
+    document.getElementById('ne-cupo-label').textContent = esViaje ? 'Cupo del vehículo (personas)' : 'Cupo por mesa (default)';
+  });
+
   document.getElementById('nuevo-evento-form').addEventListener('submit', async function(e){
     e.preventDefault();
     var errEl = document.getElementById('ne-error');
@@ -777,6 +840,10 @@
     var vestimenta = document.getElementById('ne-vestimenta').value.trim();
     var limite = document.getElementById('ne-limite').value;
     var cupo = parseInt(document.getElementById('ne-cupo').value, 10) || 10;
+    var esViaje = tipo === 'viaje';
+    var precioPersona = esViaje ? (parseFloat(document.getElementById('ne-precio').value) || null) : null;
+    var horaRegresoLocal = esViaje ? document.getElementById('ne-regreso').value : '';
+    var lugaresVisitar = esViaje ? document.getElementById('ne-lugares').value.trim() : '';
 
     if(!nombre || !fechaLocal){ return; }
 
@@ -804,6 +871,9 @@
         codigo_vestimenta: vestimenta || null,
         fecha_limite_confirmacion: limite || null,
         cupo_default_mesa: cupo,
+        precio_persona: precioPersona,
+        hora_regreso: horaRegresoLocal ? new Date(horaRegresoLocal).toISOString() : null,
+        lugares_visitar: lugaresVisitar || null,
         owner_id: userId
       }]).select('id,slug').single();
 
@@ -812,11 +882,14 @@
       var nuevoId = insertRes.data.id;
       var nuevoSlug = insertRes.data.slug;
 
-      await db.from('mesas').insert([
-        { evento_id: nuevoId, nombre: 'Mesa principal', cupo: cupo, orden: 0 },
-        { evento_id: nuevoId, nombre: 'Mesa 2', cupo: cupo, orden: 1 },
-        { evento_id: nuevoId, nombre: 'Mesa 3', cupo: cupo, orden: 2 }
-      ]);
+      var mesasIniciales = esViaje
+        ? [{ evento_id: nuevoId, nombre: 'Combi', cupo: cupo, orden: 0 }]
+        : [
+            { evento_id: nuevoId, nombre: 'Mesa principal', cupo: cupo, orden: 0 },
+            { evento_id: nuevoId, nombre: 'Mesa 2', cupo: cupo, orden: 1 },
+            { evento_id: nuevoId, nombre: 'Mesa 3', cupo: cupo, orden: 2 }
+          ];
+      await db.from('mesas').insert(mesasIniciales);
 
       window.location.search = '?e=' + encodeURIComponent(nuevoSlug);
     }catch(err){
