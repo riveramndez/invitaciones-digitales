@@ -1442,7 +1442,7 @@
     var declinados = guests.filter(function(g){return g.status==='declinado';});
     var pendientes = guests.filter(function(g){return g.status==='pendiente';});
     var pasesConfirmados = confirmados.reduce(function(a,g){return a+g.pases;},0);
-    var conMesa = guests.filter(function(g){return g.mesa;}).length;
+    var conMesa = guests.filter(function(g){return g.mesa;}).reduce(function(a,g){return a + g.pases;}, 0);
 
     var cards = [
       {k:'INVITADOS', v: total},
